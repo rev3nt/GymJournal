@@ -1,0 +1,44 @@
+name: gym_journal
+description: "Lift Log — локальный журнал тренировок."
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.12.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  flutter_riverpod: ^3.4.3
+  drift: ^2.34.4
+  drift_flutter: ^0.3.1
+  path_provider: ^2.1.6
+  path: ^1.9.1
+  fl_chart: ^1.2.0
+  intl: ^0.20.3
+  uuid: ^4.6.0
+  collection: ^1.19.1
+  file_picker: ^13.1.0
+  share_plus: ^13.3.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  drift_dev: ^2.34.6
+  build_runner: ^2.15.1
+  flutter_launcher_icons: 0.14.4
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: assets/app_icon.png
+  adaptive_icon_background: "#1A1A1A"
+  adaptive_icon_foreground: assets/app_icon.png
+  remove_alpha_ios: true
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/app_icon.png

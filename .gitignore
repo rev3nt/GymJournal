@@ -1,0 +1,91 @@
+# Miscellaneous
+*.class
+*.log
+*.pyc
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+.atom/
+.build/
+.buildlog/
+.history
+.svn/
+.swiftpm/
+migrate_working_dir/
+
+# IntelliJ / Android Studio
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# VS Code / Cursor (keep shared launch configs optional)
+.vscode/
+.cursor/
+!.vscode/extensions.json
+
+# Flutter / Dart
+**/doc/api/
+**/ios/Flutter/.last_build_id
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+build/
+coverage/
+.flutter-plugins-dependencies
+
+# Local build artifacts & APKs (publish via GitHub Releases instead)
+*.apk
+*.aab
+*.apks
+*.ipa
+*.dSYM.zip
+*.symbols
+
+# Symbolication / obfuscation
+app.*.symbols
+app.*.map.json
+
+# Android Studio build outputs
+/android/app/debug
+/android/app/profile
+/android/app/release
+**/android/**/gradle-wrapper.jar.bak
+
+# Secrets & local env
+.env
+.env.*
+!.env.example
+*.pem
+*.jks
+*.keystore
+key.properties
+**/google-services.json
+**/GoogleService-Info.plist
+secrets/
+credentials.json
+
+# Platform junk
+**/ios/Pods/
+**/ios/.symlinks/
+**/macos/Flutter/ephemeral/
+**/linux/flutter/ephemeral/
+**/windows/flutter/ephemeral/
+**/android/.gradle/
+**/android/local.properties
+**/android/captures/
+**/android/key.properties
+
+# Test / tooling
+.dart_tool/
+.packages
+pubspec.lock.bak
+*.g.dart.bak
+
+# Generated / local notes
+RELEASE_NOTES.local.md

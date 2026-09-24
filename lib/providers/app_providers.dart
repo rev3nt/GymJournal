@@ -38,6 +38,7 @@ class UiSession {
     this.statsWorkoutCard = 0,
     this.statsExerciseCard = 0,
     this.statsExercise,
+    this.statsWorkout,
     this.weight = 60,
     this.reps = 8,
   });
@@ -51,6 +52,8 @@ class UiSession {
   final int statsWorkoutCard;
   final int statsExerciseCard;
   final String? statsExercise;
+  /// Selected finished-workout name for the workouts stats section (`null` = all).
+  final String? statsWorkout;
   final double weight;
   final int reps;
 
@@ -67,6 +70,8 @@ class UiSession {
     int? statsWorkoutCard,
     int? statsExerciseCard,
     String? statsExercise,
+    String? statsWorkout,
+    bool clearStatsWorkout = false,
     double? weight,
     int? reps,
   }) {
@@ -81,6 +86,7 @@ class UiSession {
       statsWorkoutCard: statsWorkoutCard ?? this.statsWorkoutCard,
       statsExerciseCard: statsExerciseCard ?? this.statsExerciseCard,
       statsExercise: statsExercise ?? this.statsExercise,
+      statsWorkout: clearStatsWorkout ? null : (statsWorkout ?? this.statsWorkout),
       weight: weight ?? this.weight,
       reps: reps ?? this.reps,
     );
@@ -111,6 +117,14 @@ class AppController extends Notifier<UiSession> {
       state = state.copyWith(statsExerciseCard: index.clamp(0, exerciseCardCount - 1));
 
   void setStatsExercise(String name) => state = state.copyWith(statsExercise: name);
+
+  void setStatsWorkout(String? name) {
+    if (name == null || name.isEmpty) {
+      state = state.copyWith(clearStatsWorkout: true);
+    } else {
+      state = state.copyWith(statsWorkout: name);
+    }
+  }
 
   void setWeight(double w) => state = state.copyWith(weight: w);
 

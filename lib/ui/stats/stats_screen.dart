@@ -48,7 +48,10 @@ class StatsScreen extends ConsumerWidget {
                     const SizedBox(height: 12),
                     Expanded(
                       child: ui.statsSection == StatsSection.workouts
-                          ? _WorkoutsSlider(history: history)
+                          ? _WorkoutsSlider(
+                              history: history,
+                              workoutName: ui.statsWorkout,
+                            )
                           : _ExercisesSlider(
                               history: history,
                               names: names,
@@ -131,8 +134,13 @@ class _SectionToggle extends StatelessWidget {
 // ── Workouts carousel (session tonnage) ──────────────────────────────────────
 
 class _WorkoutsSlider extends ConsumerStatefulWidget {
-  const _WorkoutsSlider({required this.history});
+  const _WorkoutsSlider({
+    required this.history,
+    required this.workoutName,
+  });
+
   final List<WorkoutSession> history;
+  final String? workoutName;
 
   @override
   ConsumerState<_WorkoutsSlider> createState() => _WorkoutsSliderState();
@@ -143,6 +151,17 @@ class _WorkoutsSliderState extends ConsumerState<_WorkoutsSlider> {
   bool _pageAnimating = false;
 
   static const _count = AppController.workoutCardCount;
+  static const _allLabel = 'Все тренировки';
+
+  List<String> get _workoutNames {
+    final names = <String>{};
+    for (final h in widget.history) {
+      final n = h.name.trim();
+      if (n.isNotEmpty) names.add(n);
+    }
+    final list = names.toList()..sort();
+    return list;
+  }
 
   @override
   void initState() {
@@ -173,9 +192,40 @@ class _WorkoutsSliderState extends ConsumerState<_WorkoutsSlider> {
   @override
   Widget build(BuildContext context) {
     final index = ref.watch(appControllerProvider).statsWorkoutCard;
+    final names = _workoutNames;
+    final selected = widget.workoutName;
+    final validSelected = selected != null && names.contains(selected) ? selected : null;
+    final filtered = validSelected == null
+        ? widget.history
+        : widget.history.where((h) => h.name == validSelected).toList();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        _PickerTrigger(
+          caption: 'ТРЕНИРОВКА',
+          label: validSelected ?? _allLabel,
+          enabled: names.isNotEmpty,
+          onTap: () async {
+            if (names.isEmpty) {
+              showAppToast(context, 'Нет завершённых тренировок');
+              return;
+            }
+            final options = [_allLabel, ...names];
+            final initial = validSelected ?? _allLabel;
+            final picked = await showStatsWheel(
+              context,
+              names: options,
+              initial: initial,
+              title: 'Тренировка',
+            );
+            if (!context.mounted || picked == null) return;
+            ref.read(appControllerProvider.notifier).setStatsWorkout(
+                  picked == _allLabel ? null : picked,
+                );
+          },
+        ),
+        const SizedBox(height: 12),
         _CardSegment(
           labels: const ['По тренировкам', '30 дней', 'Сводка'],
           index: index,
@@ -196,9 +246,9 @@ class _WorkoutsSliderState extends ConsumerState<_WorkoutsSlider> {
                     ref.read(appControllerProvider.notifier).setStatsWorkoutCard(i);
                   },
                   children: [
-                    _SessionTonnageCard(history: widget.history),
-                    _DailyTonnageCard(history: widget.history),
-                    _WorkoutSummaryCard(history: widget.history),
+                    _SessionTonnageCard(history: filtered),
+                    _DailyTonnageCard(history: filtered),
+                    _WorkoutSummaryCard(history: filtered),
                   ],
                 ),
               ),
@@ -270,6 +320,7 @@ class _ExercisesSliderState extends ConsumerState<_ExercisesSlider> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _PickerTrigger(
+          caption: 'УПРАЖНЕНИЕ',
           label: exercise ?? 'Нет упражнений',
           enabled: widget.names.isNotEmpty,
           onTap: () async {
@@ -277,10 +328,11 @@ class _ExercisesSliderState extends ConsumerState<_ExercisesSlider> {
               showAppToast(context, 'Нет упражнений');
               return;
             }
-            final picked = await showExerciseWheel(
+            final picked = await showStatsWheel(
               context,
               names: widget.names,
               initial: exercise ?? widget.names.first,
+              title: 'Упражнение',
             );
             if (!context.mounted) return;
             if (picked != null) {
@@ -393,11 +445,13 @@ class _CardSegment extends StatelessWidget {
 
 class _PickerTrigger extends StatelessWidget {
   const _PickerTrigger({
+    required this.caption,
     required this.label,
     required this.onTap,
     required this.enabled,
   });
 
+  final String caption;
   final String label;
   final VoidCallback onTap;
   final bool enabled;
@@ -424,7 +478,7 @@ class _PickerTrigger extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'УПРАЖНЕНИЕ',
+                      caption,
                       style: monoStyle(
                         fontSize: 11,
                         letterSpacing: 0.4,
@@ -487,10 +541,11 @@ class _StatsDots extends StatelessWidget {
   }
 }
 
-Future<String?> showExerciseWheel(
+Future<String?> showStatsWheel(
   BuildContext context, {
   required List<String> names,
   required String initial,
+  String title = 'Выбор',
 }) {
   return showModalBottomSheet<String>(
     context: context,
@@ -501,15 +556,24 @@ Future<String?> showExerciseWheel(
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
     ),
-    builder: (ctx) => _WheelSheet(names: List<String>.from(names), initial: initial),
+    builder: (ctx) => _WheelSheet(
+      names: List<String>.from(names),
+      initial: initial,
+      title: title,
+    ),
   );
 }
 
 class _WheelSheet extends StatefulWidget {
-  const _WheelSheet({required this.names, required this.initial});
+  const _WheelSheet({
+    required this.names,
+    required this.initial,
+    required this.title,
+  });
 
   final List<String> names;
   final String initial;
+  final String title;
 
   @override
   State<_WheelSheet> createState() => _WheelSheetState();
@@ -553,11 +617,11 @@ class _WheelSheetState extends State<_WheelSheet> {
                       onPressed: () => Navigator.of(context).pop(),
                       child: const Text('Отмена', style: TextStyle(color: AppColors.muted)),
                     ),
-                    const Expanded(
+                    Expanded(
                       child: Text(
-                        'Упражнение',
+                        widget.title,
                         textAlign: TextAlign.center,
-                        style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+                        style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
                       ),
                     ),
                     TextButton(
@@ -658,35 +722,43 @@ class _ChartShell extends StatelessWidget {
               Expanded(
                 child: Text(
                   title,
-                  style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+                  style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 18),
                 ),
               ),
               if (sub.isNotEmpty)
-                Text(sub, style: const TextStyle(color: AppColors.muted, fontSize: 13)),
+                Text(sub, style: const TextStyle(color: AppColors.muted, fontSize: 14)),
             ],
           ),
           if (kpis.isNotEmpty) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: 14),
             Row(
               children: kpis
                   .map(
                     (k) => Expanded(
                       child: Container(
-                        margin: const EdgeInsets.only(right: 6),
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                        margin: const EdgeInsets.only(right: 8),
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
                         decoration: BoxDecoration(
                           color: AppColors.fg.withValues(alpha: 0.04),
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: AppColors.border),
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
                               k.$1,
-                              style: const TextStyle(color: AppColors.muted, fontSize: 11),
+                              style: const TextStyle(
+                                color: AppColors.muted,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
-                            const SizedBox(height: 2),
-                            Text(k.$2, style: monoStyle(fontWeight: FontWeight.w700)),
+                            const SizedBox(height: 6),
+                            Text(
+                              k.$2,
+                              style: monoStyle(fontWeight: FontWeight.w700, fontSize: 18),
+                            ),
                           ],
                         ),
                       ),
@@ -904,7 +976,7 @@ class _WorkingWeightCard extends StatelessWidget {
         ('Пик', _fmtKg(peak)),
         ('Δ период', '${delta >= 0 ? '+' : ''}${_fmtKg(delta)}'),
       ],
-      child: _LineChart(points: last12, padZero: false),
+      child: _LineChart(points: last12, padZero: false, precise: true),
     );
   }
 }
@@ -936,7 +1008,7 @@ class _OrmCard extends StatelessWidget {
         ('Пик', _fmt(ys.reduce((a, b) => a > b ? a : b))),
         ('Средняя', _fmt(ys.reduce((a, b) => a + b) / ys.length)),
       ],
-      child: _LineChart(points: last12, padZero: false),
+      child: _LineChart(points: last12, padZero: false, precise: true),
     );
   }
 }
@@ -1006,154 +1078,370 @@ List<(DateTime, double)> _tonnageDays(List<WorkoutSession> history, int windowDa
   });
 }
 
-class _LineChart extends StatelessWidget {
+class _LineChart extends StatefulWidget {
   const _LineChart({
     required this.points,
     this.padZero = true,
+    this.precise = false,
   });
 
   final List<(DateTime, double)> points;
   final bool padZero;
+  /// When true, show one decimal for weights (working weight); else round.
+  final bool precise;
+
+  @override
+  State<_LineChart> createState() => _LineChartState();
+}
+
+class _LineChartState extends State<_LineChart> {
+  int? _selected;
+
+  String _valueLabel(double v) =>
+      widget.precise ? '${_fmtKg(v)} кг' : '${_fmt(v)} кг';
 
   @override
   Widget build(BuildContext context) {
+    final points = widget.points;
     final ys = points.map((p) => p.$2);
     final rawMax = ys.reduce((a, b) => a > b ? a : b);
-    final rawMin = padZero ? 0.0 : ys.reduce((a, b) => a < b ? a : b);
+    final rawMin = widget.padZero ? 0.0 : ys.reduce((a, b) => a < b ? a : b);
     final span = (rawMax - rawMin).abs();
     final pad = span <= 0 ? (rawMax == 0 ? 1.0 : rawMax * 0.08) : span * 0.12;
-    final minY = padZero ? 0.0 : (rawMin - pad).clamp(0.0, double.infinity);
+    final minY = widget.padZero ? 0.0 : (rawMin - pad).clamp(0.0, double.infinity);
     final maxY = rawMax + pad;
     final fmt = DateFormat('d MMM', 'ru');
-    return IgnorePointer(
-      child: LineChart(
-        LineChartData(
-          minY: minY,
-          maxY: maxY <= minY ? minY + 1 : maxY,
-          lineTouchData: const LineTouchData(enabled: false),
-          gridData: FlGridData(
-            show: true,
-            drawVerticalLine: false,
-            getDrawingHorizontalLine: (_) =>
-                const FlLine(color: AppColors.border, strokeWidth: 1),
-          ),
-          borderData: FlBorderData(show: false),
-          titlesData: FlTitlesData(
-            topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            leftTitles: AxisTitles(
-              sideTitles: SideTitles(
-                showTitles: true,
-                reservedSize: 40,
-                getTitlesWidget: (v, _) => Text(
-                  _fmtKg(v),
-                  style: monoStyle(fontSize: 9, color: AppColors.muted),
+    final selected = _selected;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Expanded(
+          child: LineChart(
+            LineChartData(
+              minY: minY,
+              maxY: maxY <= minY ? minY + 1 : maxY,
+              lineTouchData: LineTouchData(
+                enabled: true,
+                handleBuiltInTouches: true,
+                touchSpotThreshold: 28,
+                getTouchedSpotIndicator: (barData, spotIndexes) {
+                  return spotIndexes.map((index) {
+                    return TouchedSpotIndicatorData(
+                      const FlLine(color: AppColors.accent, strokeWidth: 1.2),
+                      FlDotData(
+                        show: true,
+                        getDotPainter: (spot, percent, bar, idx) => FlDotCirclePainter(
+                          radius: 7,
+                          color: AppColors.accent,
+                          strokeWidth: 3,
+                          strokeColor: AppColors.bg,
+                        ),
+                      ),
+                    );
+                  }).toList();
+                },
+                touchTooltipData: LineTouchTooltipData(
+                  fitInsideHorizontally: true,
+                  fitInsideVertically: true,
+                  maxContentWidth: 200,
+                  tooltipBorderRadius: BorderRadius.circular(12),
+                  tooltipPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  tooltipBorder: const BorderSide(color: AppColors.border),
+                  getTooltipColor: (_) => AppColors.surface,
+                  getTooltipItems: (spots) {
+                    return spots.map((s) {
+                      final i = s.x.round().clamp(0, points.length - 1);
+                      final p = points[i];
+                      return LineTooltipItem(
+                        '${fmt.format(p.$1)}\n${_valueLabel(p.$2)}',
+                        monoStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.fg,
+                        ),
+                        textAlign: TextAlign.center,
+                      );
+                    }).toList();
+                  },
                 ),
-              ),
-            ),
-            bottomTitles: AxisTitles(
-              sideTitles: SideTitles(
-                showTitles: true,
-                reservedSize: 22,
-                interval: 1,
-                getTitlesWidget: (v, meta) {
-                  final i = v.round();
-                  if (i < 0 || i >= points.length) return const SizedBox.shrink();
-                  if (points.length > 6 && i != 0 && i != points.length - 1 && i.isOdd) {
-                    return const SizedBox.shrink();
+                touchCallback: (event, response) {
+                  final spot = response?.lineBarSpots?.firstOrNull;
+                  if (spot == null) {
+                    if (event is FlTapUpEvent ||
+                        event is FlPanEndEvent ||
+                        event is FlLongPressEnd) {
+                      // keep last selection visible under the chart
+                    }
+                    return;
                   }
-                  return Text(
-                    fmt.format(points[i].$1),
-                    style: monoStyle(fontSize: 9, color: AppColors.muted),
-                  );
+                  final i = spot.x.round().clamp(0, points.length - 1);
+                  if (_selected != i) setState(() => _selected = i);
                 },
               ),
+              gridData: FlGridData(
+                show: true,
+                drawVerticalLine: false,
+                getDrawingHorizontalLine: (_) =>
+                    const FlLine(color: AppColors.border, strokeWidth: 1),
+              ),
+              borderData: FlBorderData(show: false),
+              titlesData: FlTitlesData(
+                topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                leftTitles: AxisTitles(
+                  sideTitles: SideTitles(
+                    showTitles: true,
+                    reservedSize: 46,
+                    getTitlesWidget: (v, _) => Text(
+                      widget.precise ? _fmtKg(v) : _fmt(v),
+                      style: monoStyle(fontSize: 11, color: AppColors.muted),
+                    ),
+                  ),
+                ),
+                bottomTitles: AxisTitles(
+                  sideTitles: SideTitles(
+                    showTitles: true,
+                    reservedSize: 26,
+                    interval: 1,
+                    getTitlesWidget: (v, meta) {
+                      final i = v.round();
+                      if (i < 0 || i >= points.length) return const SizedBox.shrink();
+                      if (points.length > 6 && i != 0 && i != points.length - 1 && i.isOdd) {
+                        return const SizedBox.shrink();
+                      }
+                      return Text(
+                        fmt.format(points[i].$1),
+                        style: monoStyle(fontSize: 11, color: AppColors.muted),
+                      );
+                    },
+                  ),
+                ),
+              ),
+              lineBarsData: [
+                LineChartBarData(
+                  spots: [
+                    for (var i = 0; i < points.length; i++) FlSpot(i.toDouble(), points[i].$2),
+                  ],
+                  isCurved: false,
+                  color: AppColors.accent,
+                  barWidth: 2.4,
+                  dotData: FlDotData(
+                    show: true,
+                    getDotPainter: (spot, percent, bar, index) {
+                      final on = selected == index;
+                      return FlDotCirclePainter(
+                        radius: on ? 6.5 : 4.5,
+                        color: AppColors.accent,
+                        strokeWidth: on ? 2.5 : 1.5,
+                        strokeColor: AppColors.bg,
+                      );
+                    },
+                  ),
+                  belowBarData: BarAreaData(show: true, color: AppColors.accentSoft),
+                ),
+              ],
             ),
           ),
-          lineBarsData: [
-            LineChartBarData(
-              spots: [
-                for (var i = 0; i < points.length; i++) FlSpot(i.toDouble(), points[i].$2),
-              ],
-              isCurved: false,
-              color: AppColors.accent,
-              barWidth: 2.4,
-              dotData: const FlDotData(show: true),
-              belowBarData: BarAreaData(show: true, color: AppColors.accentSoft),
-            ),
-          ],
         ),
-      ),
+        const SizedBox(height: 10),
+        AnimatedSwitcher(
+          duration: const Duration(milliseconds: 150),
+          child: selected == null
+              ? Container(
+                  key: const ValueKey('hint'),
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                  decoration: BoxDecoration(
+                    color: AppColors.bg,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.border),
+                  ),
+                  child: Text(
+                    'Нажмите на точку, чтобы увидеть точное значение',
+                    textAlign: TextAlign.center,
+                    style: monoStyle(fontSize: 13, color: AppColors.muted),
+                  ),
+                )
+              : Container(
+                  key: ValueKey(selected),
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                  decoration: BoxDecoration(
+                    color: AppColors.accentSoft,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.accent.withValues(alpha: 0.35)),
+                  ),
+                  child: Text(
+                    '${fmt.format(points[selected].$1)}  ·  ${_valueLabel(points[selected].$2)}',
+                    textAlign: TextAlign.center,
+                    style: monoStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.fg,
+                    ),
+                  ),
+                ),
+        ),
+      ],
     );
   }
 }
 
-class _BarChart extends StatelessWidget {
+class _BarChart extends StatefulWidget {
   const _BarChart({required this.days});
   final List<(DateTime, double)> days;
 
   @override
+  State<_BarChart> createState() => _BarChartState();
+}
+
+class _BarChartState extends State<_BarChart> {
+  int? _selected;
+
+  @override
   Widget build(BuildContext context) {
+    final days = widget.days;
     final maxY = days.map((d) => d.$2).reduce((a, b) => a > b ? a : b) * 1.15;
     final fmt = DateFormat('d MMM', 'ru');
-    return IgnorePointer(
-      child: BarChart(
-        BarChartData(
-          maxY: maxY <= 0 ? 1 : maxY,
-          barTouchData: const BarTouchData(enabled: false),
-          gridData: FlGridData(
-            show: true,
-            drawVerticalLine: false,
-            getDrawingHorizontalLine: (_) =>
-                const FlLine(color: AppColors.border, strokeWidth: 1),
-          ),
-          borderData: FlBorderData(show: false),
-          titlesData: FlTitlesData(
-            topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            leftTitles: AxisTitles(
-              sideTitles: SideTitles(
-                showTitles: true,
-                reservedSize: 40,
-                getTitlesWidget: (v, _) => Text(
-                  _fmt(v),
-                  style: monoStyle(fontSize: 9, color: AppColors.muted),
+    final selected = _selected;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Expanded(
+          child: BarChart(
+            BarChartData(
+              maxY: maxY <= 0 ? 1 : maxY,
+              barTouchData: BarTouchData(
+                enabled: true,
+                handleBuiltInTouches: true,
+                touchExtraThreshold: const EdgeInsets.all(16),
+                touchTooltipData: BarTouchTooltipData(
+                  fitInsideHorizontally: true,
+                  fitInsideVertically: true,
+                  tooltipBorderRadius: BorderRadius.circular(12),
+                  tooltipPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  tooltipBorder: const BorderSide(color: AppColors.border),
+                  getTooltipColor: (_) => AppColors.surface,
+                  getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                    final i = group.x;
+                    if (i < 0 || i >= days.length) return null;
+                    final d = days[i];
+                    return BarTooltipItem(
+                      '${fmt.format(d.$1)}\n${_fmt(d.$2)} кг',
+                      monoStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.fg,
+                      ),
+                    );
+                  },
                 ),
-              ),
-            ),
-            bottomTitles: AxisTitles(
-              sideTitles: SideTitles(
-                showTitles: true,
-                reservedSize: 22,
-                getTitlesWidget: (v, _) {
-                  final i = v.round();
-                  if (![0, 9, 19, 29].contains(i) || i >= days.length) {
-                    return const SizedBox.shrink();
-                  }
-                  return Text(
-                    fmt.format(days[i].$1),
-                    style: monoStyle(fontSize: 9, color: AppColors.muted),
-                  );
+                touchCallback: (event, response) {
+                  final group = response?.spot?.touchedBarGroupIndex;
+                  if (group == null) return;
+                  if (group < 0 || group >= days.length) return;
+                  if (days[group].$2 <= 0) return;
+                  if (_selected != group) setState(() => _selected = group);
                 },
               ),
+              gridData: FlGridData(
+                show: true,
+                drawVerticalLine: false,
+                getDrawingHorizontalLine: (_) =>
+                    const FlLine(color: AppColors.border, strokeWidth: 1),
+              ),
+              borderData: FlBorderData(show: false),
+              titlesData: FlTitlesData(
+                topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                leftTitles: AxisTitles(
+                  sideTitles: SideTitles(
+                    showTitles: true,
+                    reservedSize: 46,
+                    getTitlesWidget: (v, _) => Text(
+                      _fmt(v),
+                      style: monoStyle(fontSize: 11, color: AppColors.muted),
+                    ),
+                  ),
+                ),
+                bottomTitles: AxisTitles(
+                  sideTitles: SideTitles(
+                    showTitles: true,
+                    reservedSize: 26,
+                    getTitlesWidget: (v, _) {
+                      final i = v.round();
+                      if (![0, 9, 19, 29].contains(i) || i >= days.length) {
+                        return const SizedBox.shrink();
+                      }
+                      return Text(
+                        fmt.format(days[i].$1),
+                        style: monoStyle(fontSize: 11, color: AppColors.muted),
+                      );
+                    },
+                  ),
+                ),
+              ),
+              barGroups: [
+                for (var i = 0; i < days.length; i++)
+                  BarChartGroupData(
+                    x: i,
+                    barRods: [
+                      BarChartRodData(
+                        toY: days[i].$2,
+                        color: days[i].$2 > 0
+                            ? (selected == i ? AppColors.fg : AppColors.accent)
+                            : AppColors.border,
+                        width: selected == i ? 6 : 4,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ],
+                  ),
+              ],
             ),
           ),
-          barGroups: [
-            for (var i = 0; i < days.length; i++)
-              BarChartGroupData(
-                x: i,
-                barRods: [
-                  BarChartRodData(
-                    toY: days[i].$2,
-                    color: days[i].$2 > 0 ? AppColors.accent : AppColors.border,
-                    width: 4,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ],
-              ),
-          ],
         ),
-      ),
+        const SizedBox(height: 10),
+        AnimatedSwitcher(
+          duration: const Duration(milliseconds: 150),
+          child: selected == null
+              ? Container(
+                  key: const ValueKey('hint'),
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                  decoration: BoxDecoration(
+                    color: AppColors.bg,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.border),
+                  ),
+                  child: Text(
+                    'Нажмите на столбец, чтобы увидеть тоннаж',
+                    textAlign: TextAlign.center,
+                    style: monoStyle(fontSize: 13, color: AppColors.muted),
+                  ),
+                )
+              : Container(
+                  key: ValueKey(selected),
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                  decoration: BoxDecoration(
+                    color: AppColors.accentSoft,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.accent.withValues(alpha: 0.35)),
+                  ),
+                  child: Text(
+                    '${fmt.format(days[selected].$1)}  ·  ${_fmt(days[selected].$2)} кг',
+                    textAlign: TextAlign.center,
+                    style: monoStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.fg,
+                    ),
+                  ),
+                ),
+        ),
+      ],
     );
   }
 }

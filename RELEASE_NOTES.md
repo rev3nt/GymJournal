@@ -1,29 +1,23 @@
-# Lift Log v1.0.0
+# Lift Log v1.1.0
 
 ## Русский
 
-Первый публичный релиз **Lift Log** — локального журнала тренировок.
-
-### Что внутри
-- Шаблоны и активная тренировка (обычные / дроп / мио / читинг)
-- История и тоннаж сессий
-- **Новая статистика:** два слайдера — тоннаж тренировок и **рабочий вес** упражнений
-- Локальное хранение (SQLite), бэкап JSON
+### Что нового
+- Выбор **тренировки** в статистике (как упражнение) — фильтр тоннажа по названию или «Все тренировки»
+- Интерактивные графики: тап по точкам/столбцам показывает точный вес или тоннаж
+- Крупнее KPI-карточки и подсказки под мобильный экран
 
 ### Установка
-Скачайте `LiftLog.apk` из Assets этого релиза и установите на Android (разрешите установку из неизвестных источников при необходимости).
+Скачайте `LiftLog.apk` из Assets этого релиза.
 
 ---
 
 ## English
 
-First public release of **Lift Log**, a local-first gym journal.
-
-### Highlights
-- Templates & live workout logging (normal / drop / myo / cheat legs)
-- History with session tonnage
-- **Dual stats:** workout tonnage carousel + exercise **working weight** charts
-- On-device SQLite storage, JSON backup
+### What's new
+- **Workout picker** in stats (same UX as exercises) — filter tonnage by session name or “All workouts”
+- Interactive charts: tap dots/bars for exact values
+- Larger KPI chips and tooltips for mobile
 
 ### Install
-Download `LiftLog.apk` from the release Assets and install on Android.
+Download `LiftLog.apk` from this release’s Assets.

@@ -17,21 +17,11 @@
   - Интерактивные графики (тап по точкам)
 - **Бэкап** — экспорт / импорт JSON
 
-## Скриншоты / Screenshots
-
-| Шаблоны | Тренировка | История |
-|--------|------------|---------|
-| ![Шаблоны](docs/screenshots/01-templates.png) | ![Тренировка](docs/screenshots/02-active-workout.png) | ![История](docs/screenshots/03-history.png) |
-
-| Статистика · тренировки | Статистика · рабочий вес |
-|--------------------------|---------------------------|
-| ![Тоннаж](docs/screenshots/04-stats-workouts.png) | ![Рабочий вес](docs/screenshots/05-stats-working-weight.png) |
-
 ## Скачать APK / Download
 
 Релизы с APK: **[GitHub Releases](https://github.com/rev3nt/GymJournal/releases)**
 
-Прямая ссылка на последний релиз (после публикации):  
+Прямая ссылка на последний релиз:  
 `https://github.com/rev3nt/GymJournal/releases/latest`
 
 ## Сборка / Build
@@ -60,17 +50,13 @@ flutter run -d windows
 
 ```
 lib/
-  data/       # Drift SQLite, seed, backup
+  data/       # Drift SQLite, backup
   domain/     # модели, calc (тоннаж, 1ПМ, рабочий вес)
   providers/  # Riverpod
-  ui/         # экраны: templates, workout, history/stats shell
+  ui/         # экраны: templates, workout, stats
   theme/      # AppColors, mono labels
 ```
 
 ## Рабочий вес / Working weight
 
 Для упражнения в завершённой сессии берётся вес, который чаще всего встречается среди ног `SetType.normal`. При равенстве частоты — больший вес; если снова ничья — более поздний по времени лог.
-
-## Лицензия
-
-Личный / open project — см. репозиторий.

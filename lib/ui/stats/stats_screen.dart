@@ -1245,43 +1245,11 @@ class _LineChartState extends State<_LineChart> {
           ),
         ),
         const SizedBox(height: 10),
-        AnimatedSwitcher(
-          duration: const Duration(milliseconds: 150),
-          child: selected == null
-              ? Container(
-                  key: const ValueKey('hint'),
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-                  decoration: BoxDecoration(
-                    color: AppColors.bg,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.border),
-                  ),
-                  child: Text(
-                    'Нажмите на точку, чтобы увидеть точное значение',
-                    textAlign: TextAlign.center,
-                    style: monoStyle(fontSize: 13, color: AppColors.muted),
-                  ),
-                )
-              : Container(
-                  key: ValueKey(selected),
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-                  decoration: BoxDecoration(
-                    color: AppColors.accentSoft,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.accent.withValues(alpha: 0.35)),
-                  ),
-                  child: Text(
-                    '${fmt.format(points[selected].$1)}  ·  ${_valueLabel(points[selected].$2)}',
-                    textAlign: TextAlign.center,
-                    style: monoStyle(
-                      fontSize: 17,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.fg,
-                    ),
-                  ),
-                ),
+        _SelectionBanner(
+          text: selected == null
+              ? 'Нажмите на точку, чтобы увидеть точное значение'
+              : '${fmt.format(points[selected].$1)}  ·  ${_valueLabel(points[selected].$2)}',
+          active: selected != null,
         ),
       ],
     );
@@ -1403,45 +1371,47 @@ class _BarChartState extends State<_BarChart> {
           ),
         ),
         const SizedBox(height: 10),
-        AnimatedSwitcher(
-          duration: const Duration(milliseconds: 150),
-          child: selected == null
-              ? Container(
-                  key: const ValueKey('hint'),
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-                  decoration: BoxDecoration(
-                    color: AppColors.bg,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.border),
-                  ),
-                  child: Text(
-                    'Нажмите на столбец, чтобы увидеть тоннаж',
-                    textAlign: TextAlign.center,
-                    style: monoStyle(fontSize: 13, color: AppColors.muted),
-                  ),
-                )
-              : Container(
-                  key: ValueKey(selected),
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-                  decoration: BoxDecoration(
-                    color: AppColors.accentSoft,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.accent.withValues(alpha: 0.35)),
-                  ),
-                  child: Text(
-                    '${fmt.format(days[selected].$1)}  ·  ${_fmt(days[selected].$2)} кг',
-                    textAlign: TextAlign.center,
-                    style: monoStyle(
-                      fontSize: 17,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.fg,
-                    ),
-                  ),
-                ),
+        _SelectionBanner(
+          text: selected == null
+              ? 'Нажмите на столбец, чтобы увидеть тоннаж'
+              : '${fmt.format(days[selected].$1)}  ·  ${_fmt(days[selected].$2)} кг',
+          active: selected != null,
         ),
       ],
+    );
+  }
+}
+
+class _SelectionBanner extends StatelessWidget {
+  const _SelectionBanner({
+    required this.text,
+    required this.active,
+  });
+
+  final String text;
+  final bool active;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+      decoration: BoxDecoration(
+        color: active ? AppColors.accentSoft : AppColors.bg,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: active ? AppColors.accent.withValues(alpha: 0.35) : AppColors.border,
+        ),
+      ),
+      child: Text(
+        text,
+        textAlign: TextAlign.center,
+        style: monoStyle(
+          fontSize: active ? 17 : 13,
+          fontWeight: active ? FontWeight.w700 : FontWeight.w500,
+          color: active ? AppColors.fg : AppColors.muted,
+        ),
+      ),
     );
   }
 }

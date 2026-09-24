@@ -1,11 +1,11 @@
-# Lift Log v1.1.0
+# Lift Log v1.1.1
 
 ## Русский
 
 ### Что нового
-- Выбор **тренировки** в статистике (как упражнение) — фильтр тоннажа по названию или «Все тренировки»
-- Интерактивные графики: тап по точкам/столбцам показывает точный вес или тоннаж
-- Крупнее KPI-карточки и подсказки под мобильный экран
+- Исправление краша статистики при быстром нажатии на точки графика
+- Выбор тренировки в статистике (как у упражнений)
+- Интерактивные графики и крупные KPI под мобильный экран
 
 ### Установка
 Скачайте `LiftLog.apk` из Assets этого релиза.
@@ -15,9 +15,9 @@
 ## English
 
 ### What's new
-- **Workout picker** in stats (same UX as exercises) — filter tonnage by session name or “All workouts”
-- Interactive charts: tap dots/bars for exact values
-- Larger KPI chips and tooltips for mobile
+- Fix stats crash when rapidly tapping chart points
+- Workout picker in stats (same UX as exercises)
+- Interactive charts and larger mobile KPI chips
 
 ### Install
 Download `LiftLog.apk` from this release’s Assets.

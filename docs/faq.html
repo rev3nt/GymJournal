@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FAQ — Lift Log дневник тренировок</title>
+  <meta name="description" content="Частые вопросы о Lift Log: без регистрации, где данные, рабочий вес и 1ПМ Epley, дроп-сеты, бэкап JSON, установка APK.">
+  <link rel="canonical" href="https://rev3nt.github.io/GymJournal/faq.html">
+  <link rel="icon" href="assets/app_icon.png" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&family=Unbounded:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">К содержанию</a>
+  <header class="site-header">
+    <div class="wrap header-inner">
+      <a class="logo" href="index.html"><img src="assets/app_icon.png" width="36" height="36" alt=""> Lift Log</a>
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">Меню</button>
+      <nav class="nav" id="site-nav" aria-label="Основная навигация">
+        <a href="index.html">Главная</a>
+        <a href="vozmozhnosti.html">Возможности</a>
+        <a href="o-prilozhenii.html">О приложении</a>
+        <a href="faq.html" aria-current="page">FAQ</a>
+        <a href="kontakty.html">Контакты</a>
+        <a class="nav-cta" href="skachat.html">Скачать</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main" class="section-tight">
+    <div class="wrap page-hero">
+      <nav aria-label="Хлебные крошки">
+        <ol class="breadcrumbs">
+          <li><a href="index.html">Главная</a></li>
+          <li aria-current="page">FAQ</li>
+        </ol>
+      </nav>
+      <h1 class="page-title">Частые вопросы</h1>
+      <p class="lede">Ответы на возражения перед установкой дневника тренировок.</p>
+    </div>
+
+    <div class="wrap content faq reveal">
+      <details id="account" open>
+        <summary>Нужна ли регистрация?</summary>
+        <p>Нет. Lift Log работает без аккаунта: открыли приложение и ведёте журнал. Облачный логин не требуется.</p>
+      </details>
+      <details id="data">
+        <summary>Где хранятся данные?</summary>
+        <p>Локально на устройстве (SQLite через Drift). Сервер приложения данные не собирает. Для переноса используйте <a href="backup.html">экспорт JSON</a>.</p>
+      </details>
+      <details id="1pm">
+        <summary>Что такое рабочий вес и 1ПМ?</summary>
+        <p><strong>Рабочий вес</strong> — вес, который чаще всего встречается среди обычных подходов упражнения в сессии (при ничьих — больший / более поздний). <strong>1ПМ</strong> — оценка одного повторения максимума по формуле Epley. Подробнее на странице <a href="statistika.html">статистики</a>.</p>
+      </details>
+      <details id="drop">
+        <summary>Зачем типы подходов: дроп, мио, читинг?</summary>
+        <p>Чтобы не смешивать «чистые» рабочие сеты с дропами и помощью. Статистика рабочего веса опирается на обычные подходы; типы помогают честно логировать методику.</p>
+      </details>
+      <details id="backup">
+        <summary>Как сделать бэкап дневника?</summary>
+        <p>Экспортируйте журнал в JSON из приложения и сохраните файл. На новом телефоне — импорт. См. <a href="backup.html">бэкап</a>.</p>
+      </details>
+      <details id="install">
+        <summary>Безопасно ли ставить APK с GitHub?</summary>
+        <p>Релизы публикуются в официальном репозитории <a href="https://github.com/rev3nt/GymJournal">rev3nt/GymJournal</a>. Android предупредит о установке со стороннего источника — это нормально для APK вне магазина. Сверяйте URL репозитория.</p>
+      </details>
+      <details>
+        <summary>Есть ли iOS / веб-версия?</summary>
+        <p>Основной канал распространения сейчас — Android APK. Код на Flutter; веб/десктоп не позиционируются как продуктовый релиз витрины.</p>
+      </details>
+    </div>
+
+    <div class="wrap cta-band reveal">
+      <h2>Готовы установить?</h2>
+      <div class="cta-row">
+        <a class="btn btn-primary" href="https://github.com/rev3nt/GymJournal/releases/latest">Скачать APK</a>
+        <a class="btn btn-secondary" href="kontakty.html">Написать в Issues</a>
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap footer-grid">
+      <div>
+        <p class="footer-brand">Lift Log</p>
+        <p>Локальный дневник силовых. Репозиторий GymJournal на GitHub.</p>
+      </div>
+      <div>
+        <h3>Разделы</h3>
+        <ul class="footer-links">
+          <li><a href="vozmozhnosti.html">Возможности</a></li>
+          <li><a href="skachat.html">Скачать</a></li>
+          <li><a href="faq.html">FAQ</a></li>
+          <li><a href="karta-sajta.html">Карта сайта</a></li>
+        </ul>
+      </div>
+      <div>
+        <h3>Ссылки</h3>
+        <ul class="footer-links">
+          <li><a href="https://github.com/rev3nt/GymJournal">GitHub</a></li>
+          <li><a href="https://github.com/rev3nt/GymJournal/releases/latest">Releases</a></li>
+          <li><a href="kontakty.html">Контакты</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="wrap footer-bottom">
+      <span>© Lift Log · GymJournal</span>
+      <span>Сайт для GitHub Pages</span>
+    </div>
+  </footer>
+  <script src="js/main.js"></script>
+</body>
+</html>

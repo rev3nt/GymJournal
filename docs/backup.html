@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Бэкап дневника тренировок JSON — Lift Log</title>
+  <meta name="description" content="Экспорт и импорт дневника тренировок в JSON. Бэкап Lift Log без облака: сохраните журнал на устройство или перенесите на новый телефон.">
+  <link rel="canonical" href="https://rev3nt.github.io/GymJournal/backup.html">
+  <link rel="icon" href="assets/app_icon.png" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&family=Unbounded:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">К содержанию</a>
+  <header class="site-header">
+    <div class="wrap header-inner">
+      <a class="logo" href="index.html"><img src="assets/app_icon.png" width="36" height="36" alt=""> Lift Log</a>
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">Меню</button>
+      <nav class="nav" id="site-nav" aria-label="Основная навигация">
+        <a href="index.html">Главная</a>
+        <a href="vozmozhnosti.html" aria-current="page">Возможности</a>
+        <a href="o-prilozhenii.html">О приложении</a>
+        <a href="faq.html">FAQ</a>
+        <a href="kontakty.html">Контакты</a>
+        <a class="nav-cta" href="skachat.html">Скачать</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main" class="section-tight">
+    <div class="wrap page-hero">
+      <nav aria-label="Хлебные крошки">
+        <ol class="breadcrumbs">
+          <li><a href="index.html">Главная</a></li>
+          <li><a href="vozmozhnosti.html">Возможности</a></li>
+          <li aria-current="page">Бэкап</li>
+        </ol>
+      </nav>
+      <h1 class="page-title">Бэкап дневника в JSON</h1>
+      <p class="lede">Экспорт и импорт журнала — данные у вас, не в чужом облаке.</p>
+    </div>
+
+    <div class="wrap content">
+      <div class="prose-block reveal">
+        <h2>Зачем нужен бэкап</h2>
+        <p>Local-first означает: всё лежит в SQLite на телефоне. Чтобы не потерять историю при смене устройства или переустановке, Lift Log умеет выгрузить и загрузить журнал в формате JSON.</p>
+        <ul>
+          <li>Экспорт — файл бэкапа в доступное хранилище</li>
+          <li>Импорт — восстановление шаблонов и истории</li>
+          <li>Без обязательной регистрации и подписки</li>
+        </ul>
+      </div>
+      <div class="prose-block reveal">
+        <h2>Ответ облачным дневникам</h2>
+        <p>GymPad, Iron Mind и экосистемы вроде MyFoodBro синхронизируют через аккаунт. Это удобно, но требует доверия к сервису. Lift Log отвечает запросу «бэкап дневника тренировок» иначе: файл у пользователя, как у офлайн-приложений (в т.ч. близкий по идее ГРИФ), плюс открытый репозиторий на GitHub.</p>
+        <h3>Практика</h3>
+        <p>Делайте экспорт после блока тренировок или перед обновлением APK. Файл можно положить в облако самостоятельно — по вашему выбору.</p>
+      </div>
+      <div class="cta-band reveal">
+        <h2>Скачать Lift Log</h2>
+        <div class="cta-row">
+          <a class="btn btn-primary" href="https://github.com/rev3nt/GymJournal/releases/latest">Скачать APK</a>
+          <a class="btn btn-secondary" href="faq.html#backup">Вопрос в FAQ</a>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap footer-grid">
+      <div>
+        <p class="footer-brand">Lift Log</p>
+        <p>Локальный дневник силовых. Репозиторий GymJournal на GitHub.</p>
+      </div>
+      <div>
+        <h3>Разделы</h3>
+        <ul class="footer-links">
+          <li><a href="vozmozhnosti.html">Возможности</a></li>
+          <li><a href="skachat.html">Скачать</a></li>
+          <li><a href="faq.html">FAQ</a></li>
+          <li><a href="karta-sajta.html">Карта сайта</a></li>
+        </ul>
+      </div>
+      <div>
+        <h3>Ссылки</h3>
+        <ul class="footer-links">
+          <li><a href="https://github.com/rev3nt/GymJournal">GitHub</a></li>
+          <li><a href="https://github.com/rev3nt/GymJournal/releases/latest">Releases</a></li>
+          <li><a href="kontakty.html">Контакты</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="wrap footer-bottom">
+      <span>© Lift Log · GymJournal</span>
+      <span>Сайт для GitHub Pages</span>
+    </div>
+  </footer>
+  <script src="js/main.js"></script>
+</body>
+</html>

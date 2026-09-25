@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://rev3nt.github.io/GymJournal/sitemap.xml

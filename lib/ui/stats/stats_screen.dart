@@ -788,6 +788,8 @@ List<(DateTime, double)> _sessionTonnageSeries(List<WorkoutSession> history) {
     if (h.finishedAt == null) continue;
     points.add((h.finishedAt!, h.tonnage));
   }
+  // Chronological: oldest left → newest right (history stream is newest-first).
+  points.sort((a, b) => a.$1.compareTo(b.$1));
   return points;
 }
 
@@ -804,6 +806,7 @@ List<(DateTime, double)> _workingWeightSeries(
     if (ww == null) continue;
     points.add((h.finishedAt!, ww));
   }
+  points.sort((a, b) => a.$1.compareTo(b.$1));
   return points;
 }
 
@@ -818,6 +821,7 @@ List<(DateTime, double)> _exerciseOrmSeries(
     if (ex == null || ex.best1rm <= 0) continue;
     points.add((h.finishedAt!, ex.best1rm));
   }
+  points.sort((a, b) => a.$1.compareTo(b.$1));
   return points;
 }
 

@@ -13,8 +13,10 @@ import 'package:share_plus/share_plus.dart';
 import '../../domain/models.dart';
 import '../../providers/app_providers.dart';
 import '../../theme/app_theme.dart';
+import '../guide/user_guide.dart';
 import '../widgets/common.dart';
 import 'template_editor_sheet.dart';
+
 
 class TemplatesScreen extends ConsumerWidget {
   const TemplatesScreen({super.key});
@@ -35,6 +37,11 @@ class TemplatesScreen extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Expanded(child: PageTitle('Lift Log')),
+                  IconButton(
+                    tooltip: 'Гайд',
+                    onPressed: () => startScenarioGuide(context, ref),
+                    icon: const Icon(Icons.help_outline, color: AppColors.muted),
+                  ),
                   IconButton(
                     tooltip: 'Удалить все данные',
                     onPressed: () => _clearData(context, ref),
@@ -77,14 +84,24 @@ class TemplatesScreen extends ConsumerWidget {
                     tpl.exercises.map((e) => e.name).where((n) => n.isNotEmpty).toList();
                 final sub =
                     '${tpl.exercises.length} упр. · ${tpl.targetSetsSum} подх. · ${names.take(2).join(', ')}${names.length > 2 ? '…' : ''}';
+                Widget card = _TemplateCard(
+                  name: tpl.name,
+                  subtitle: sub,
+                  onPlay: () => _start(context, ref, tpl.id),
+                  onLongPress: () => _openActions(context, ref, tpl),
+                );
+                if (tpl.id == kGuideDemoTemplateId || tpl.name == kGuideDemoTemplateName) {
+                  card = GuideShowcase(
+                    guideKey: GuideKeys.demoTemplatePlay,
+                    title: 'Старт из шаблона',
+                    description:
+                        'Play запускает тренировку по шаблону. Пустая тренировка — запасной вариант.',
+                    child: card,
+                  );
+                }
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 10),
-                  child: _TemplateCard(
-                    name: tpl.name,
-                    subtitle: sub,
-                    onPlay: () => _start(context, ref, tpl.id),
-                    onLongPress: () => _openActions(context, ref, tpl),
-                  ),
+                  child: card,
                 );
               }),
             ],
@@ -189,7 +206,9 @@ class TemplatesScreen extends ConsumerWidget {
       final ok = await confirmDialog(
         context,
         title: 'Заменить тренировку?',
-        message: 'Заменить текущую незавершённую тренировку?',
+        message:
+            'Уже есть незавершённая тренировка. Если заменить — текущая сессия будет потеряна. '
+            'Чтобы сохранить её, сначала завершите на вкладке «Тренировка».',
         confirmLabel: 'Заменить',
         destructive: true,
       );

@@ -26,6 +26,7 @@ class TemplateExercises extends Table {
   TextColumn get templateId => text().references(Templates, #id, onDelete: KeyAction.cascade)();
   TextColumn get name => text()();
   IntColumn get targetSets => integer().withDefault(const Constant(4))();
+  IntColumn get volumeMultiplier => integer().withDefault(const Constant(1))();
   IntColumn get sortOrder => integer().withDefault(const Constant(0))();
 
   @override
@@ -50,6 +51,7 @@ class WorkoutExercises extends Table {
   TextColumn get workoutId => text().references(Workouts, #id, onDelete: KeyAction.cascade)();
   TextColumn get name => text()();
   IntColumn get targetSets => integer().withDefault(const Constant(4))();
+  IntColumn get volumeMultiplier => integer().withDefault(const Constant(1))();
   IntColumn get sortOrder => integer().withDefault(const Constant(0))();
   RealColumn get volume => real().withDefault(const Constant(0))();
   RealColumn get best1rm => real().withDefault(const Constant(0))();
@@ -103,13 +105,23 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _openConnection());
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
         onCreate: (m) async {
           await m.createAll();
           await customStatement('PRAGMA foreign_keys = ON');
+        },
+        onUpgrade: (m, from, to) async {
+          if (from < 2) {
+            await customStatement(
+              'ALTER TABLE template_exercises ADD COLUMN volume_multiplier INTEGER NOT NULL DEFAULT 1',
+            );
+            await customStatement(
+              'ALTER TABLE workout_exercises ADD COLUMN volume_multiplier INTEGER NOT NULL DEFAULT 1',
+            );
+          }
         },
         beforeOpen: (details) async {
           await customStatement('PRAGMA foreign_keys = ON');
@@ -139,6 +151,8 @@ class AppDatabase extends _$AppDatabase {
       await delete(workouts).go();
       await delete(templateExercises).go();
       await delete(templates).go();
+      await delete(appMeta).go();
+      await into(appMeta).insert(AppMetaCompanion.insert(key: 'seeded', value: '1'));
     });
   }
 
@@ -162,6 +176,7 @@ class AppDatabase extends _$AppDatabase {
                     id: e.id,
                     name: e.name,
                     targetSets: e.targetSets,
+                    volumeMultiplier: e.volumeMultiplier,
                   ))
               .toList(),
         ));
@@ -186,6 +201,7 @@ class AppDatabase extends _$AppDatabase {
                   id: e.id,
                   name: e.name,
                   targetSets: e.targetSets,
+                  volumeMultiplier: e.volumeMultiplier,
                 ))
             .toList(),
       ));
@@ -215,6 +231,7 @@ class AppDatabase extends _$AppDatabase {
           templateId: tpl.id,
           name: e.name,
           targetSets: Value(e.targetSets),
+          volumeMultiplier: Value(e.volumeMultiplier.clamp(1, 2)),
           sortOrder: Value(i),
         ));
       }
@@ -241,6 +258,7 @@ class AppDatabase extends _$AppDatabase {
           templateId: tpl.id,
           name: e.name,
           targetSets: Value(e.targetSets),
+          volumeMultiplier: Value(e.volumeMultiplier.clamp(1, 2)),
           sortOrder: Value(i),
         ));
       }
@@ -290,6 +308,7 @@ class AppDatabase extends _$AppDatabase {
         id: ex.id,
         name: ex.name,
         targetSets: ex.targetSets,
+        volumeMultiplier: ex.volumeMultiplier,
         sets: sets,
         volume: ex.volume,
         best1rm: ex.best1rm,
@@ -366,6 +385,7 @@ class AppDatabase extends _$AppDatabase {
         workoutId: session.id,
         name: ex.name,
         targetSets: Value(ex.targetSets),
+        volumeMultiplier: Value(ex.volumeMultiplier.clamp(1, 2)),
         sortOrder: Value(ei),
         volume: Value(ex.volume),
         best1rm: Value(ex.best1rm),
@@ -504,6 +524,7 @@ class AppDatabase extends _$AppDatabase {
             templateId: tpl.id,
             name: e.name,
             targetSets: Value(e.targetSets),
+            volumeMultiplier: Value(e.volumeMultiplier.clamp(1, 2)),
             sortOrder: Value(ei),
           ));
         }
@@ -517,6 +538,21 @@ class AppDatabase extends _$AppDatabase {
         AppMetaCompanion.insert(key: 'seeded', value: '1'),
       );
     });
+  }
+
+  Future<String?> getMeta(String key) async {
+    final row = await (select(appMeta)..where((t) => t.key.equals(key))).getSingleOrNull();
+    return row?.value;
+  }
+
+  Future<void> setMeta(String key, String value) async {
+    await into(appMeta).insertOnConflictUpdate(
+      AppMetaCompanion.insert(key: key, value: value),
+    );
+  }
+
+  Future<void> deleteMeta(String key) async {
+    await (delete(appMeta)..where((t) => t.key.equals(key))).go();
   }
 }
 

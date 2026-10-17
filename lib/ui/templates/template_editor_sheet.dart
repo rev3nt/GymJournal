@@ -82,6 +82,7 @@ class _TemplateEditorBodyState extends ConsumerState<_TemplateEditorBody> {
                   id: AppDatabase.newId('tex'),
                   name: e.name,
                   targetSets: e.targetSets,
+                  volumeMultiplier: e.volumeMultiplier,
                 ))
             .toList()
         : [TemplateExercise(id: AppDatabase.newId('tex'), name: '', targetSets: 4)];
@@ -316,6 +317,19 @@ class _TemplateEditorBodyState extends ConsumerState<_TemplateEditorBody> {
                                   });
                                 },
                               ),
+                              const Spacer(),
+                              _VolumeMultiplierToggle(
+                                active: ex.volumeMultiplier == 2,
+                                onTap: () {
+                                  _syncNamesFromControllers();
+                                  setState(() {
+                                    final cur = _exercises[index];
+                                    _exercises[index] = cur.copyWith(
+                                      volumeMultiplier: cur.volumeMultiplier == 2 ? 1 : 2,
+                                    );
+                                  });
+                                },
+                              ),
                             ],
                           ),
                         ],
@@ -431,6 +445,43 @@ class _TemplateEditorBodyState extends ConsumerState<_TemplateEditorBody> {
     if (!mounted) return;
     showAppToast(context, widget.existing != null ? 'Шаблон обновлён' : 'Шаблон сохранён');
     Navigator.pop(context);
+  }
+}
+
+class _VolumeMultiplierToggle extends StatelessWidget {
+  const _VolumeMultiplierToggle({required this.active, required this.onTap});
+
+  final bool active;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: 'Одна рука / нога — тоннаж ×2',
+      child: Material(
+        color: active ? AppColors.accentSoft : AppColors.surface,
+        borderRadius: BorderRadius.circular(10),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(10),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: active ? AppColors.accent : AppColors.border),
+            ),
+            child: Text(
+              '×2',
+              style: monoStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: active ? AppColors.accent : AppColors.muted,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
 

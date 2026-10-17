@@ -7,6 +7,7 @@ import '../../domain/calc.dart';
 import '../../domain/models.dart';
 import '../../providers/app_providers.dart';
 import '../../theme/app_theme.dart';
+import '../guide/user_guide.dart';
 import '../widgets/common.dart';
 
 class StatsScreen extends ConsumerWidget {
@@ -38,7 +39,13 @@ class StatsScreen extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const PageTitle('Статистика'),
+                    GuideShowcase(
+                      guideKey: GuideKeys.statsTitle,
+                      title: 'Статистика',
+                      description:
+                          'Тоннаж по тренировкам и рабочие веса по упражнениям — свайпайте карточки и касайтесь точек на графике.',
+                      child: const PageTitle('Статистика'),
+                    ),
                     const SizedBox(height: 12),
                     _SectionToggle(
                       section: ui.statsSection,

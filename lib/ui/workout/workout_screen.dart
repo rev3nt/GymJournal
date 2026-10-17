@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:showcaseview/showcaseview.dart';
 
 import '../../data/database.dart';
 import '../../domain/calc.dart';
 import '../../domain/models.dart';
 import '../../providers/app_providers.dart';
 import '../../theme/app_theme.dart';
+import '../guide/user_guide.dart';
 import '../widgets/common.dart';
 
 class WorkoutScreen extends ConsumerWidget {
@@ -283,16 +285,16 @@ class _ActiveWorkoutView extends ConsumerWidget {
                       onSelect: () async {
                         final past =
                             await ref.read(databaseProvider).lastPastSetsForExercise(ex.name);
-                        controller.setActiveExercise(ex.id, applyPrefill: true, past: past);
-                        final nextIdx = ex.sets.length;
-                        if (nextIdx < past.length && past[nextIdx].legs.isNotEmpty) {
-                          final main = past[nextIdx].legs.firstWhere(
-                            (l) => l.type == SetType.normal,
-                            orElse: () => past[nextIdx].legs.first,
-                          );
-                          controller.setWeight(main.weight);
-                          controller.setReps(main.reps);
-                        }
+                        controller.setActiveExercise(
+                          ex.id,
+                          applyPrefill: true,
+                          past: past,
+                          currentSetsLen: ex.sets.length,
+                        );
+                      },
+                      onToggleMultiplier: () async {
+                        final next = ex.volumeMultiplier == 2 ? 1 : 2;
+                        await controller.setExerciseVolumeMultiplier(session, ex.id, next);
                       },
                       onRename: () async {
                         final name = await _promptName(context, initial: ex.name, title: 'Переименовать');
@@ -327,37 +329,43 @@ class _ActiveWorkoutView extends ConsumerWidget {
                 },
               ),
               const SizedBox(height: 22),
-              SizedBox(
-                width: double.infinity,
-                height: 64,
-                child: OutlinedButton(
-                  onPressed: () async {
-                    final hasSets = session.exercises.any((e) => e.sets.isNotEmpty);
-                    if (!hasSets) {
-                      final ok = await confirmDialog(
-                        context,
-                        title: 'Отменить?',
-                        message: 'Нет подходов. Отменить тренировку?',
-                        confirmLabel: 'Отменить',
-                        destructive: true,
-                      );
-                      if (!ok) return;
-                    }
-                    await controller.finishWorkout(session);
-                    if (context.mounted && hasSets) {
-                      showAppToast(context, 'Тренировка сохранена');
-                    }
-                  },
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.danger,
-                    side: BorderSide(color: AppColors.danger.withValues(alpha: 0.32)),
-                    backgroundColor: Color.lerp(AppColors.surface, AppColors.danger, 0.16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppColors.radiusLg),
+              GuideShowcase(
+                guideKey: GuideKeys.finishWorkout,
+                title: 'Завершить',
+                description:
+                    'Сохраняет тренировку в историю. Без подходов — просто отмена сессии.',
+                child: SizedBox(
+                  width: double.infinity,
+                  height: 64,
+                  child: OutlinedButton(
+                    onPressed: () async {
+                      final hasSets = session.exercises.any((e) => e.sets.isNotEmpty);
+                      if (!hasSets) {
+                        final ok = await confirmDialog(
+                          context,
+                          title: 'Отменить?',
+                          message: 'Нет подходов. Отменить тренировку?',
+                          confirmLabel: 'Отменить',
+                          destructive: true,
+                        );
+                        if (!ok) return;
+                      }
+                      await controller.finishWorkout(session);
+                      if (context.mounted && hasSets) {
+                        showAppToast(context, 'Тренировка сохранена');
+                      }
+                    },
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.danger,
+                      side: BorderSide(color: AppColors.danger.withValues(alpha: 0.32)),
+                      backgroundColor: Color.lerp(AppColors.surface, AppColors.danger, 0.16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppColors.radiusLg),
+                      ),
+                      textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
                     ),
-                    textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                    child: const Text('Завершить тренировку'),
                   ),
-                  child: const Text('Завершить тренировку'),
                 ),
               ),
             ],
@@ -448,6 +456,7 @@ class _ExerciseCard extends StatelessWidget {
     this.selected = false,
     this.onSelect,
     this.onRename,
+    this.onToggleMultiplier,
     this.onEditSet,
     this.onDeleteSet,
   });
@@ -458,6 +467,7 @@ class _ExerciseCard extends StatelessWidget {
   final bool selected;
   final VoidCallback? onSelect;
   final VoidCallback? onRename;
+  final VoidCallback? onToggleMultiplier;
   final ValueChanged<Approach>? onEditSet;
   final ValueChanged<String>? onDeleteSet;
 
@@ -474,6 +484,7 @@ class _ExerciseCard extends StatelessWidget {
       if (!readonly) pastSets.length,
       0,
     ].reduce((a, b) => a > b ? a : b);
+    final isDouble = exercise.volumeMultiplier == 2;
 
     final activeBorder = Color.lerp(AppColors.border, AppColors.fg, 0.28)!;
 
@@ -500,6 +511,16 @@ class _ExerciseCard extends StatelessWidget {
                       style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
                     ),
                   ),
+                  if (!readonly && onToggleMultiplier != null) ...[
+                    _MultiplierChip(
+                      active: isDouble,
+                      onTap: onToggleMultiplier!,
+                    ),
+                    const SizedBox(width: 4),
+                  ] else if (readonly && isDouble) ...[
+                    const _MultiplierBadge(),
+                    const SizedBox(width: 4),
+                  ],
                   if (!readonly)
                     IconButton(
                       tooltip: 'Переименовать',
@@ -553,6 +574,7 @@ class _ExerciseCard extends StatelessWidget {
                             index: i,
                             set: set,
                             ghost: false,
+                            showDouble: isDouble,
                             onTap: readonly || onEditSet == null
                                 ? null
                                 : () => onEditSet!(set),
@@ -575,6 +597,7 @@ class _ExerciseCard extends StatelessWidget {
                           index: i,
                           set: pastSets[i],
                           ghost: true,
+                          showDouble: isDouble,
                           isNext: i == exercise.sets.length,
                         );
                       }),
@@ -586,12 +609,66 @@ class _ExerciseCard extends StatelessWidget {
   }
 }
 
+class _MultiplierChip extends StatelessWidget {
+  const _MultiplierChip({required this.active, required this.onTap});
+
+  final bool active;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: active ? AppColors.accentSoft : AppColors.bg,
+      borderRadius: BorderRadius.circular(8),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: active ? AppColors.accent : AppColors.border),
+          ),
+          child: Text(
+            '×2',
+            style: monoStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: active ? AppColors.accent : AppColors.muted,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MultiplierBadge extends StatelessWidget {
+  const _MultiplierBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: AppColors.accentSoft,
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        '×2',
+        style: monoStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.accent),
+      ),
+    );
+  }
+}
+
 class _SetRow extends StatelessWidget {
   const _SetRow({
     required this.index,
     required this.set,
     required this.ghost,
     this.isNext = false,
+    this.showDouble = false,
     this.onTap,
   });
 
@@ -599,6 +676,7 @@ class _SetRow extends StatelessWidget {
   final Approach set;
   final bool ghost;
   final bool isNext;
+  final bool showDouble;
   final VoidCallback? onTap;
 
   @override
@@ -627,20 +705,32 @@ class _SetRow extends StatelessWidget {
               child: Wrap(
                 spacing: 10,
                 runSpacing: 4,
-                children: set.legs.map((leg) {
-                  final color = ghost && leg.type == SetType.normal
-                      ? AppColors.fg.withValues(alpha: 0.7)
-                      : colorForSetType(leg.type);
-                  return Text(
-                    '${_fmtWeight(leg.weight)}×${leg.reps}',
-                    style: monoStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: color,
-                      letterSpacing: -0.32,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  ...set.legs.map((leg) {
+                    final color = ghost && leg.type == SetType.normal
+                        ? AppColors.fg.withValues(alpha: 0.7)
+                        : colorForSetType(leg.type);
+                    return Text(
+                      '${_fmtWeight(leg.weight)}×${leg.reps}',
+                      style: monoStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: color,
+                        letterSpacing: -0.32,
+                      ),
+                    );
+                  }),
+                  if (showDouble)
+                    Text(
+                      '×2',
+                      style: monoStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.accent.withValues(alpha: ghost ? 0.7 : 1),
+                      ),
                     ),
-                  );
-                }).toList(),
+                ],
               ),
             ),
             if (onTap != null)
@@ -756,16 +846,23 @@ class _InputPanelState extends ConsumerState<_InputPanel> {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Expanded(
-                  child: NumericField(
-                    label: 'Вес, кг',
-                    controller: _weightCtrl,
-                    focusNode: _weightFocus,
-                    decimal: true,
-                    tint: tint,
-                    onChanged: (v) {
-                      final parsed = double.tryParse(v.replaceAll(',', '.'));
-                      if (parsed != null) controller.setWeight(parsed);
-                    },
+                  child: GuideShowcase(
+                    guideKey: GuideKeys.weightField,
+                    title: 'Вес и повторы',
+                    description:
+                        'При старте из шаблона подставляются значения с прошлой тренировки.',
+                    tooltipPosition: TooltipPosition.top,
+                    child: NumericField(
+                      label: 'Вес, кг',
+                      controller: _weightCtrl,
+                      focusNode: _weightFocus,
+                      decimal: true,
+                      tint: tint,
+                      onChanged: (v) {
+                        final parsed = double.tryParse(v.replaceAll(',', '.'));
+                        if (parsed != null) controller.setWeight(parsed);
+                      },
+                    ),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -786,34 +883,40 @@ class _InputPanelState extends ConsumerState<_InputPanel> {
                   ),
                 ),
                 const SizedBox(width: 8),
-                SizedBox(
-                  width: 56,
-                  height: 52,
-                  child: FilledButton(
-                    onPressed: () async {
-                      setState(() => _menuOpen = false);
-                      try {
-                        await controller.logSet(widget.session);
-                        _syncFromUi(force: true);
-                      } on ArgumentError {
-                        if (context.mounted) {
-                          showAppToast(context, 'Проверьте вес и повторы');
+                GuideShowcase(
+                  guideKey: GuideKeys.logSet,
+                  title: 'Записать подход',
+                  description: 'Введите вес и повторы, затем нажмите галочку — подход попадёт в лог.',
+                  tooltipPosition: TooltipPosition.top,
+                  child: SizedBox(
+                    width: 56,
+                    height: 52,
+                    child: FilledButton(
+                      onPressed: () async {
+                        setState(() => _menuOpen = false);
+                        try {
+                          await controller.logSet(widget.session);
+                          _syncFromUi(force: true);
+                        } on ArgumentError {
+                          if (context.mounted) {
+                            showAppToast(context, 'Проверьте вес и повторы');
+                          }
+                        } on StateError catch (e) {
+                          if (context.mounted && e.message == 'need_normal_first') {
+                            showAppToast(context, 'Сначала запишите обычный подход');
+                          }
                         }
-                      } on StateError catch (e) {
-                        if (context.mounted && e.message == 'need_normal_first') {
-                          showAppToast(context, 'Сначала запишите обычный подход');
-                        }
-                      }
-                    },
-                    style: FilledButton.styleFrom(
-                      backgroundColor: tint ?? AppColors.accent,
-                      foregroundColor: AppColors.accentOn,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
+                      },
+                      style: FilledButton.styleFrom(
+                        backgroundColor: tint ?? AppColors.accent,
+                        foregroundColor: AppColors.accentOn,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        padding: EdgeInsets.zero,
                       ),
-                      padding: EdgeInsets.zero,
+                      child: const Icon(Icons.check, size: 24),
                     ),
-                    child: const Icon(Icons.check, size: 24),
                   ),
                 ),
               ],
@@ -831,48 +934,54 @@ class _InputPanelState extends ConsumerState<_InputPanel> {
             ],
             Align(
               alignment: Alignment.centerLeft,
-              child: Opacity(
-                opacity: hasApproach ? 1 : 0.35,
-                child: Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(999),
-                    onTap: !hasApproach
-                        ? null
-                        : () => setState(() => _menuOpen = !_menuOpen),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 150),
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      height: 40,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(999),
-                        border: Border.all(
-                          color: armed ? tint! : AppColors.border,
+              child: GuideShowcase(
+                guideKey: GuideKeys.addExtra,
+                title: '+ к подходу',
+                description: 'Дроп, миорепы или читинг добавляются к последнему обычному подходу.',
+                tooltipPosition: TooltipPosition.top,
+                child: Opacity(
+                  opacity: hasApproach ? 1 : 0.35,
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(999),
+                      onTap: !hasApproach
+                          ? null
+                          : () => setState(() => _menuOpen = !_menuOpen),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 150),
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        height: 40,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(999),
+                          border: Border.all(
+                            color: armed ? tint! : AppColors.border,
+                          ),
+                          color: armed ? tint!.withValues(alpha: 0.22) : Colors.transparent,
                         ),
-                        color: armed ? tint!.withValues(alpha: 0.22) : Colors.transparent,
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            !hasApproach
-                                ? '+ к подходу'
-                                : armed
-                                    ? pending.label
-                                    : '+ к подходу · $setCount',
-                            style: TextStyle(
-                              color: hasApproach ? AppColors.fg : AppColors.muted,
-                              fontWeight: armed ? FontWeight.w700 : FontWeight.w600,
-                              fontSize: 13,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              !hasApproach
+                                  ? '+ к подходу'
+                                  : armed
+                                      ? pending.label
+                                      : '+ к подходу · $setCount',
+                              style: TextStyle(
+                                color: hasApproach ? AppColors.fg : AppColors.muted,
+                                fontWeight: armed ? FontWeight.w700 : FontWeight.w600,
+                                fontSize: 13,
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 4),
-                          Icon(
-                            _menuOpen ? Icons.expand_less : Icons.expand_more,
-                            size: 16,
-                            color: AppColors.muted,
-                          ),
-                        ],
+                            const SizedBox(width: 4),
+                            Icon(
+                              _menuOpen ? Icons.expand_less : Icons.expand_more,
+                              size: 16,
+                              color: AppColors.muted,
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -1025,6 +1134,57 @@ class _EditApproachSheetState extends State<_EditApproachSheet> {
     return widget.approach.copyWith(legs: legs);
   }
 
+  Future<void> _addExtraLeg() async {
+    final type = await showModalBottomSheet<SetType>(
+      context: context,
+      backgroundColor: AppColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) {
+        final extras = [SetType.drop, SetType.myo, SetType.cheat];
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(12, 12, 12, 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Text(
+                  'Добавить к подходу',
+                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+                ),
+                const SizedBox(height: 10),
+                ...extras.map((t) {
+                  final color = colorForSetType(t);
+                  return ListTile(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 4),
+                    leading: Icon(Icons.add_circle_outline, color: color),
+                    title: Text(t.label),
+                    onTap: () => Navigator.pop(ctx, t),
+                  );
+                }),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+    if (type == null || !mounted) return;
+    final base = _legs.isNotEmpty ? _legs.last : null;
+    setState(() {
+      _legs.add(
+        _EditableLeg(
+          id: AppDatabase.newId('leg'),
+          weight: TextEditingController(text: base?.weight.text ?? '0'),
+          reps: TextEditingController(text: base?.reps.text.isNotEmpty == true ? base!.reps.text : '0'),
+          type: type,
+          at: DateTime.now(),
+        ),
+      );
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final bottom = MediaQuery.viewInsetsOf(context).bottom;
@@ -1060,7 +1220,7 @@ class _EditApproachSheetState extends State<_EditApproachSheet> {
               const Padding(
                 padding: EdgeInsets.symmetric(vertical: 20),
                 child: Text(
-                  'Нет частей подхода. Сохраните, чтобы удалить.',
+                  'Нет частей подхода. Добавьте доп или сохраните, чтобы удалить.',
                   style: TextStyle(color: AppColors.muted),
                 ),
               )
@@ -1136,7 +1296,20 @@ class _EditApproachSheetState extends State<_EditApproachSheet> {
                   ),
                 );
               }),
-            const SizedBox(height: 14),
+            const SizedBox(height: 10),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                onPressed: _addExtraLeg,
+                icon: const Icon(Icons.add, size: 18),
+                label: const Text('+ доп'),
+                style: TextButton.styleFrom(
+                  foregroundColor: AppColors.fg,
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
             PrimaryButton(
               label: 'Сохранить',
               onPressed: () => Navigator.pop(context, _buildResult()),

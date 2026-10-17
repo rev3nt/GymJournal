@@ -4,6 +4,12 @@ double approachVolume(Approach approach) {
   return approach.legs.fold(0.0, (s, leg) => s + leg.weight * leg.reps);
 }
 
+double exerciseVolume(WorkoutExercise ex) {
+  final raw = ex.sets.fold(0.0, (s, set) => s + approachVolume(set));
+  final mult = ex.volumeMultiplier <= 0 ? 1 : ex.volumeMultiplier;
+  return raw * mult;
+}
+
 double epley1rm(double weight, int reps) {
   if (reps <= 0) return 0;
   if (reps == 1) return weight;
@@ -20,14 +26,11 @@ double approachBest1rm(Approach approach) {
 }
 
 double sessionTonnage(WorkoutSession session) {
-  return session.exercises.fold(
-    0.0,
-    (sum, ex) => sum + ex.sets.fold(0.0, (s, set) => s + approachVolume(set)),
-  );
+  return session.exercises.fold(0.0, (sum, ex) => sum + exerciseVolume(ex));
 }
 
 WorkoutExercise withAggregates(WorkoutExercise ex) {
-  final volume = ex.sets.fold(0.0, (s, set) => s + approachVolume(set));
+  final volume = exerciseVolume(ex);
   final best1rm =
       ex.sets.fold(0.0, (m, set) => m > approachBest1rm(set) ? m : approachBest1rm(set));
   return ex.copyWith(volume: volume, best1rm: best1rm);

@@ -85,6 +85,7 @@ class BackupCodec {
                   'id': e.id,
                   'name': e.name,
                   'targetSets': e.targetSets,
+                  'volumeMultiplier': e.volumeMultiplier,
                 })
             .toList(),
       };
@@ -103,6 +104,7 @@ class BackupCodec {
           id: _reqString(m, 'id'),
           name: _reqString(m, 'name'),
           targetSets: _asInt(m['targetSets'], fallback: 4),
+          volumeMultiplier: _asInt(m['volumeMultiplier'], fallback: 1).clamp(1, 2),
         );
       }).toList(),
     );
@@ -121,6 +123,7 @@ class BackupCodec {
         'id': ex.id,
         'name': ex.name,
         'targetSets': ex.targetSets,
+        'volumeMultiplier': ex.volumeMultiplier,
         'volume': ex.volume,
         'best1rm': ex.best1rm,
         'sets': ex.sets.map(_approachToJson).toList(),
@@ -171,6 +174,7 @@ class BackupCodec {
       id: _reqString(json, 'id'),
       name: _reqString(json, 'name'),
       targetSets: _asInt(json['targetSets'], fallback: 4),
+      volumeMultiplier: _asInt(json['volumeMultiplier'], fallback: 1).clamp(1, 2),
       volume: _asDouble(json['volume']),
       best1rm: _asDouble(json['best1rm']),
       sets: setsRaw.map((e) {

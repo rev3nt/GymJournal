@@ -309,6 +309,18 @@ class $TemplateExercisesTable extends TemplateExercises
     requiredDuringInsert: false,
     defaultValue: const Constant(4),
   );
+  static const VerificationMeta _volumeMultiplierMeta = const VerificationMeta(
+    'volumeMultiplier',
+  );
+  @override
+  late final GeneratedColumn<int> volumeMultiplier = GeneratedColumn<int>(
+    'volume_multiplier',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(1),
+  );
   static const VerificationMeta _sortOrderMeta = const VerificationMeta(
     'sortOrder',
   );
@@ -327,6 +339,7 @@ class $TemplateExercisesTable extends TemplateExercises
     templateId,
     name,
     targetSets,
+    volumeMultiplier,
     sortOrder,
   ];
   @override
@@ -368,6 +381,15 @@ class $TemplateExercisesTable extends TemplateExercises
         targetSets.isAcceptableOrUnknown(data['target_sets']!, _targetSetsMeta),
       );
     }
+    if (data.containsKey('volume_multiplier')) {
+      context.handle(
+        _volumeMultiplierMeta,
+        volumeMultiplier.isAcceptableOrUnknown(
+          data['volume_multiplier']!,
+          _volumeMultiplierMeta,
+        ),
+      );
+    }
     if (data.containsKey('sort_order')) {
       context.handle(
         _sortOrderMeta,
@@ -399,6 +421,10 @@ class $TemplateExercisesTable extends TemplateExercises
         DriftSqlType.int,
         data['${effectivePrefix}target_sets'],
       )!,
+      volumeMultiplier: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}volume_multiplier'],
+      )!,
       sortOrder: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}sort_order'],
@@ -418,12 +444,14 @@ class TemplateExerciseRow extends DataClass
   final String templateId;
   final String name;
   final int targetSets;
+  final int volumeMultiplier;
   final int sortOrder;
   const TemplateExerciseRow({
     required this.id,
     required this.templateId,
     required this.name,
     required this.targetSets,
+    required this.volumeMultiplier,
     required this.sortOrder,
   });
   @override
@@ -433,6 +461,7 @@ class TemplateExerciseRow extends DataClass
     map['template_id'] = Variable<String>(templateId);
     map['name'] = Variable<String>(name);
     map['target_sets'] = Variable<int>(targetSets);
+    map['volume_multiplier'] = Variable<int>(volumeMultiplier);
     map['sort_order'] = Variable<int>(sortOrder);
     return map;
   }
@@ -443,6 +472,7 @@ class TemplateExerciseRow extends DataClass
       templateId: Value(templateId),
       name: Value(name),
       targetSets: Value(targetSets),
+      volumeMultiplier: Value(volumeMultiplier),
       sortOrder: Value(sortOrder),
     );
   }
@@ -457,6 +487,7 @@ class TemplateExerciseRow extends DataClass
       templateId: serializer.fromJson<String>(json['templateId']),
       name: serializer.fromJson<String>(json['name']),
       targetSets: serializer.fromJson<int>(json['targetSets']),
+      volumeMultiplier: serializer.fromJson<int>(json['volumeMultiplier']),
       sortOrder: serializer.fromJson<int>(json['sortOrder']),
     );
   }
@@ -468,6 +499,7 @@ class TemplateExerciseRow extends DataClass
       'templateId': serializer.toJson<String>(templateId),
       'name': serializer.toJson<String>(name),
       'targetSets': serializer.toJson<int>(targetSets),
+      'volumeMultiplier': serializer.toJson<int>(volumeMultiplier),
       'sortOrder': serializer.toJson<int>(sortOrder),
     };
   }
@@ -477,12 +509,14 @@ class TemplateExerciseRow extends DataClass
     String? templateId,
     String? name,
     int? targetSets,
+    int? volumeMultiplier,
     int? sortOrder,
   }) => TemplateExerciseRow(
     id: id ?? this.id,
     templateId: templateId ?? this.templateId,
     name: name ?? this.name,
     targetSets: targetSets ?? this.targetSets,
+    volumeMultiplier: volumeMultiplier ?? this.volumeMultiplier,
     sortOrder: sortOrder ?? this.sortOrder,
   );
   TemplateExerciseRow copyWithCompanion(TemplateExercisesCompanion data) {
@@ -495,6 +529,9 @@ class TemplateExerciseRow extends DataClass
       targetSets: data.targetSets.present
           ? data.targetSets.value
           : this.targetSets,
+      volumeMultiplier: data.volumeMultiplier.present
+          ? data.volumeMultiplier.value
+          : this.volumeMultiplier,
       sortOrder: data.sortOrder.present ? data.sortOrder.value : this.sortOrder,
     );
   }
@@ -506,13 +543,21 @@ class TemplateExerciseRow extends DataClass
           ..write('templateId: $templateId, ')
           ..write('name: $name, ')
           ..write('targetSets: $targetSets, ')
+          ..write('volumeMultiplier: $volumeMultiplier, ')
           ..write('sortOrder: $sortOrder')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, templateId, name, targetSets, sortOrder);
+  int get hashCode => Object.hash(
+    id,
+    templateId,
+    name,
+    targetSets,
+    volumeMultiplier,
+    sortOrder,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -521,6 +566,7 @@ class TemplateExerciseRow extends DataClass
           other.templateId == this.templateId &&
           other.name == this.name &&
           other.targetSets == this.targetSets &&
+          other.volumeMultiplier == this.volumeMultiplier &&
           other.sortOrder == this.sortOrder);
 }
 
@@ -529,6 +575,7 @@ class TemplateExercisesCompanion extends UpdateCompanion<TemplateExerciseRow> {
   final Value<String> templateId;
   final Value<String> name;
   final Value<int> targetSets;
+  final Value<int> volumeMultiplier;
   final Value<int> sortOrder;
   final Value<int> rowid;
   const TemplateExercisesCompanion({
@@ -536,6 +583,7 @@ class TemplateExercisesCompanion extends UpdateCompanion<TemplateExerciseRow> {
     this.templateId = const Value.absent(),
     this.name = const Value.absent(),
     this.targetSets = const Value.absent(),
+    this.volumeMultiplier = const Value.absent(),
     this.sortOrder = const Value.absent(),
     this.rowid = const Value.absent(),
   });
@@ -544,6 +592,7 @@ class TemplateExercisesCompanion extends UpdateCompanion<TemplateExerciseRow> {
     required String templateId,
     required String name,
     this.targetSets = const Value.absent(),
+    this.volumeMultiplier = const Value.absent(),
     this.sortOrder = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
@@ -554,6 +603,7 @@ class TemplateExercisesCompanion extends UpdateCompanion<TemplateExerciseRow> {
     Expression<String>? templateId,
     Expression<String>? name,
     Expression<int>? targetSets,
+    Expression<int>? volumeMultiplier,
     Expression<int>? sortOrder,
     Expression<int>? rowid,
   }) {
@@ -562,6 +612,7 @@ class TemplateExercisesCompanion extends UpdateCompanion<TemplateExerciseRow> {
       if (templateId != null) 'template_id': templateId,
       if (name != null) 'name': name,
       if (targetSets != null) 'target_sets': targetSets,
+      if (volumeMultiplier != null) 'volume_multiplier': volumeMultiplier,
       if (sortOrder != null) 'sort_order': sortOrder,
       if (rowid != null) 'rowid': rowid,
     });
@@ -572,6 +623,7 @@ class TemplateExercisesCompanion extends UpdateCompanion<TemplateExerciseRow> {
     Value<String>? templateId,
     Value<String>? name,
     Value<int>? targetSets,
+    Value<int>? volumeMultiplier,
     Value<int>? sortOrder,
     Value<int>? rowid,
   }) {
@@ -580,6 +632,7 @@ class TemplateExercisesCompanion extends UpdateCompanion<TemplateExerciseRow> {
       templateId: templateId ?? this.templateId,
       name: name ?? this.name,
       targetSets: targetSets ?? this.targetSets,
+      volumeMultiplier: volumeMultiplier ?? this.volumeMultiplier,
       sortOrder: sortOrder ?? this.sortOrder,
       rowid: rowid ?? this.rowid,
     );
@@ -600,6 +653,9 @@ class TemplateExercisesCompanion extends UpdateCompanion<TemplateExerciseRow> {
     if (targetSets.present) {
       map['target_sets'] = Variable<int>(targetSets.value);
     }
+    if (volumeMultiplier.present) {
+      map['volume_multiplier'] = Variable<int>(volumeMultiplier.value);
+    }
     if (sortOrder.present) {
       map['sort_order'] = Variable<int>(sortOrder.value);
     }
@@ -616,6 +672,7 @@ class TemplateExercisesCompanion extends UpdateCompanion<TemplateExerciseRow> {
           ..write('templateId: $templateId, ')
           ..write('name: $name, ')
           ..write('targetSets: $targetSets, ')
+          ..write('volumeMultiplier: $volumeMultiplier, ')
           ..write('sortOrder: $sortOrder, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -1033,6 +1090,18 @@ class $WorkoutExercisesTable extends WorkoutExercises
     requiredDuringInsert: false,
     defaultValue: const Constant(4),
   );
+  static const VerificationMeta _volumeMultiplierMeta = const VerificationMeta(
+    'volumeMultiplier',
+  );
+  @override
+  late final GeneratedColumn<int> volumeMultiplier = GeneratedColumn<int>(
+    'volume_multiplier',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(1),
+  );
   static const VerificationMeta _sortOrderMeta = const VerificationMeta(
     'sortOrder',
   );
@@ -1073,6 +1142,7 @@ class $WorkoutExercisesTable extends WorkoutExercises
     workoutId,
     name,
     targetSets,
+    volumeMultiplier,
     sortOrder,
     volume,
     best1rm,
@@ -1114,6 +1184,15 @@ class $WorkoutExercisesTable extends WorkoutExercises
       context.handle(
         _targetSetsMeta,
         targetSets.isAcceptableOrUnknown(data['target_sets']!, _targetSetsMeta),
+      );
+    }
+    if (data.containsKey('volume_multiplier')) {
+      context.handle(
+        _volumeMultiplierMeta,
+        volumeMultiplier.isAcceptableOrUnknown(
+          data['volume_multiplier']!,
+          _volumeMultiplierMeta,
+        ),
       );
     }
     if (data.containsKey('sort_order')) {
@@ -1159,6 +1238,10 @@ class $WorkoutExercisesTable extends WorkoutExercises
         DriftSqlType.int,
         data['${effectivePrefix}target_sets'],
       )!,
+      volumeMultiplier: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}volume_multiplier'],
+      )!,
       sortOrder: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}sort_order'],
@@ -1186,6 +1269,7 @@ class WorkoutExerciseRow extends DataClass
   final String workoutId;
   final String name;
   final int targetSets;
+  final int volumeMultiplier;
   final int sortOrder;
   final double volume;
   final double best1rm;
@@ -1194,6 +1278,7 @@ class WorkoutExerciseRow extends DataClass
     required this.workoutId,
     required this.name,
     required this.targetSets,
+    required this.volumeMultiplier,
     required this.sortOrder,
     required this.volume,
     required this.best1rm,
@@ -1205,6 +1290,7 @@ class WorkoutExerciseRow extends DataClass
     map['workout_id'] = Variable<String>(workoutId);
     map['name'] = Variable<String>(name);
     map['target_sets'] = Variable<int>(targetSets);
+    map['volume_multiplier'] = Variable<int>(volumeMultiplier);
     map['sort_order'] = Variable<int>(sortOrder);
     map['volume'] = Variable<double>(volume);
     map['best1rm'] = Variable<double>(best1rm);
@@ -1217,6 +1303,7 @@ class WorkoutExerciseRow extends DataClass
       workoutId: Value(workoutId),
       name: Value(name),
       targetSets: Value(targetSets),
+      volumeMultiplier: Value(volumeMultiplier),
       sortOrder: Value(sortOrder),
       volume: Value(volume),
       best1rm: Value(best1rm),
@@ -1233,6 +1320,7 @@ class WorkoutExerciseRow extends DataClass
       workoutId: serializer.fromJson<String>(json['workoutId']),
       name: serializer.fromJson<String>(json['name']),
       targetSets: serializer.fromJson<int>(json['targetSets']),
+      volumeMultiplier: serializer.fromJson<int>(json['volumeMultiplier']),
       sortOrder: serializer.fromJson<int>(json['sortOrder']),
       volume: serializer.fromJson<double>(json['volume']),
       best1rm: serializer.fromJson<double>(json['best1rm']),
@@ -1246,6 +1334,7 @@ class WorkoutExerciseRow extends DataClass
       'workoutId': serializer.toJson<String>(workoutId),
       'name': serializer.toJson<String>(name),
       'targetSets': serializer.toJson<int>(targetSets),
+      'volumeMultiplier': serializer.toJson<int>(volumeMultiplier),
       'sortOrder': serializer.toJson<int>(sortOrder),
       'volume': serializer.toJson<double>(volume),
       'best1rm': serializer.toJson<double>(best1rm),
@@ -1257,6 +1346,7 @@ class WorkoutExerciseRow extends DataClass
     String? workoutId,
     String? name,
     int? targetSets,
+    int? volumeMultiplier,
     int? sortOrder,
     double? volume,
     double? best1rm,
@@ -1265,6 +1355,7 @@ class WorkoutExerciseRow extends DataClass
     workoutId: workoutId ?? this.workoutId,
     name: name ?? this.name,
     targetSets: targetSets ?? this.targetSets,
+    volumeMultiplier: volumeMultiplier ?? this.volumeMultiplier,
     sortOrder: sortOrder ?? this.sortOrder,
     volume: volume ?? this.volume,
     best1rm: best1rm ?? this.best1rm,
@@ -1277,6 +1368,9 @@ class WorkoutExerciseRow extends DataClass
       targetSets: data.targetSets.present
           ? data.targetSets.value
           : this.targetSets,
+      volumeMultiplier: data.volumeMultiplier.present
+          ? data.volumeMultiplier.value
+          : this.volumeMultiplier,
       sortOrder: data.sortOrder.present ? data.sortOrder.value : this.sortOrder,
       volume: data.volume.present ? data.volume.value : this.volume,
       best1rm: data.best1rm.present ? data.best1rm.value : this.best1rm,
@@ -1290,6 +1384,7 @@ class WorkoutExerciseRow extends DataClass
           ..write('workoutId: $workoutId, ')
           ..write('name: $name, ')
           ..write('targetSets: $targetSets, ')
+          ..write('volumeMultiplier: $volumeMultiplier, ')
           ..write('sortOrder: $sortOrder, ')
           ..write('volume: $volume, ')
           ..write('best1rm: $best1rm')
@@ -1298,8 +1393,16 @@ class WorkoutExerciseRow extends DataClass
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, workoutId, name, targetSets, sortOrder, volume, best1rm);
+  int get hashCode => Object.hash(
+    id,
+    workoutId,
+    name,
+    targetSets,
+    volumeMultiplier,
+    sortOrder,
+    volume,
+    best1rm,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -1308,6 +1411,7 @@ class WorkoutExerciseRow extends DataClass
           other.workoutId == this.workoutId &&
           other.name == this.name &&
           other.targetSets == this.targetSets &&
+          other.volumeMultiplier == this.volumeMultiplier &&
           other.sortOrder == this.sortOrder &&
           other.volume == this.volume &&
           other.best1rm == this.best1rm);
@@ -1318,6 +1422,7 @@ class WorkoutExercisesCompanion extends UpdateCompanion<WorkoutExerciseRow> {
   final Value<String> workoutId;
   final Value<String> name;
   final Value<int> targetSets;
+  final Value<int> volumeMultiplier;
   final Value<int> sortOrder;
   final Value<double> volume;
   final Value<double> best1rm;
@@ -1327,6 +1432,7 @@ class WorkoutExercisesCompanion extends UpdateCompanion<WorkoutExerciseRow> {
     this.workoutId = const Value.absent(),
     this.name = const Value.absent(),
     this.targetSets = const Value.absent(),
+    this.volumeMultiplier = const Value.absent(),
     this.sortOrder = const Value.absent(),
     this.volume = const Value.absent(),
     this.best1rm = const Value.absent(),
@@ -1337,6 +1443,7 @@ class WorkoutExercisesCompanion extends UpdateCompanion<WorkoutExerciseRow> {
     required String workoutId,
     required String name,
     this.targetSets = const Value.absent(),
+    this.volumeMultiplier = const Value.absent(),
     this.sortOrder = const Value.absent(),
     this.volume = const Value.absent(),
     this.best1rm = const Value.absent(),
@@ -1349,6 +1456,7 @@ class WorkoutExercisesCompanion extends UpdateCompanion<WorkoutExerciseRow> {
     Expression<String>? workoutId,
     Expression<String>? name,
     Expression<int>? targetSets,
+    Expression<int>? volumeMultiplier,
     Expression<int>? sortOrder,
     Expression<double>? volume,
     Expression<double>? best1rm,
@@ -1359,6 +1467,7 @@ class WorkoutExercisesCompanion extends UpdateCompanion<WorkoutExerciseRow> {
       if (workoutId != null) 'workout_id': workoutId,
       if (name != null) 'name': name,
       if (targetSets != null) 'target_sets': targetSets,
+      if (volumeMultiplier != null) 'volume_multiplier': volumeMultiplier,
       if (sortOrder != null) 'sort_order': sortOrder,
       if (volume != null) 'volume': volume,
       if (best1rm != null) 'best1rm': best1rm,
@@ -1371,6 +1480,7 @@ class WorkoutExercisesCompanion extends UpdateCompanion<WorkoutExerciseRow> {
     Value<String>? workoutId,
     Value<String>? name,
     Value<int>? targetSets,
+    Value<int>? volumeMultiplier,
     Value<int>? sortOrder,
     Value<double>? volume,
     Value<double>? best1rm,
@@ -1381,6 +1491,7 @@ class WorkoutExercisesCompanion extends UpdateCompanion<WorkoutExerciseRow> {
       workoutId: workoutId ?? this.workoutId,
       name: name ?? this.name,
       targetSets: targetSets ?? this.targetSets,
+      volumeMultiplier: volumeMultiplier ?? this.volumeMultiplier,
       sortOrder: sortOrder ?? this.sortOrder,
       volume: volume ?? this.volume,
       best1rm: best1rm ?? this.best1rm,
@@ -1402,6 +1513,9 @@ class WorkoutExercisesCompanion extends UpdateCompanion<WorkoutExerciseRow> {
     }
     if (targetSets.present) {
       map['target_sets'] = Variable<int>(targetSets.value);
+    }
+    if (volumeMultiplier.present) {
+      map['volume_multiplier'] = Variable<int>(volumeMultiplier.value);
     }
     if (sortOrder.present) {
       map['sort_order'] = Variable<int>(sortOrder.value);
@@ -1425,6 +1539,7 @@ class WorkoutExercisesCompanion extends UpdateCompanion<WorkoutExerciseRow> {
           ..write('workoutId: $workoutId, ')
           ..write('name: $name, ')
           ..write('targetSets: $targetSets, ')
+          ..write('volumeMultiplier: $volumeMultiplier, ')
           ..write('sortOrder: $sortOrder, ')
           ..write('volume: $volume, ')
           ..write('best1rm: $best1rm, ')
@@ -2729,6 +2844,7 @@ typedef $$TemplateExercisesTableCreateCompanionBuilder =
       required String templateId,
       required String name,
       Value<int> targetSets,
+      Value<int> volumeMultiplier,
       Value<int> sortOrder,
       Value<int> rowid,
     });
@@ -2738,6 +2854,7 @@ typedef $$TemplateExercisesTableUpdateCompanionBuilder =
       Value<String> templateId,
       Value<String> name,
       Value<int> targetSets,
+      Value<int> volumeMultiplier,
       Value<int> sortOrder,
       Value<int> rowid,
     });
@@ -2797,6 +2914,11 @@ class $$TemplateExercisesTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<int> get volumeMultiplier => $composableBuilder(
+    column: $table.volumeMultiplier,
+    builder: (column) => ColumnFilters(column),
+  );
+
   ColumnFilters<int> get sortOrder => $composableBuilder(
     column: $table.sortOrder,
     builder: (column) => ColumnFilters(column),
@@ -2850,6 +2972,11 @@ class $$TemplateExercisesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get volumeMultiplier => $composableBuilder(
+    column: $table.volumeMultiplier,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<int> get sortOrder => $composableBuilder(
     column: $table.sortOrder,
     builder: (column) => ColumnOrderings(column),
@@ -2896,6 +3023,11 @@ class $$TemplateExercisesTableAnnotationComposer
 
   GeneratedColumn<int> get targetSets => $composableBuilder(
     column: $table.targetSets,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get volumeMultiplier => $composableBuilder(
+    column: $table.volumeMultiplier,
     builder: (column) => column,
   );
 
@@ -2963,6 +3095,7 @@ class $$TemplateExercisesTableTableManager
                 Value<String> templateId = const Value.absent(),
                 Value<String> name = const Value.absent(),
                 Value<int> targetSets = const Value.absent(),
+                Value<int> volumeMultiplier = const Value.absent(),
                 Value<int> sortOrder = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => TemplateExercisesCompanion(
@@ -2970,6 +3103,7 @@ class $$TemplateExercisesTableTableManager
                 templateId: templateId,
                 name: name,
                 targetSets: targetSets,
+                volumeMultiplier: volumeMultiplier,
                 sortOrder: sortOrder,
                 rowid: rowid,
               ),
@@ -2979,6 +3113,7 @@ class $$TemplateExercisesTableTableManager
                 required String templateId,
                 required String name,
                 Value<int> targetSets = const Value.absent(),
+                Value<int> volumeMultiplier = const Value.absent(),
                 Value<int> sortOrder = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => TemplateExercisesCompanion.insert(
@@ -2986,6 +3121,7 @@ class $$TemplateExercisesTableTableManager
                 templateId: templateId,
                 name: name,
                 targetSets: targetSets,
+                volumeMultiplier: volumeMultiplier,
                 sortOrder: sortOrder,
                 rowid: rowid,
               ),
@@ -3372,6 +3508,7 @@ typedef $$WorkoutExercisesTableCreateCompanionBuilder =
       required String workoutId,
       required String name,
       Value<int> targetSets,
+      Value<int> volumeMultiplier,
       Value<int> sortOrder,
       Value<double> volume,
       Value<double> best1rm,
@@ -3383,6 +3520,7 @@ typedef $$WorkoutExercisesTableUpdateCompanionBuilder =
       Value<String> workoutId,
       Value<String> name,
       Value<int> targetSets,
+      Value<int> volumeMultiplier,
       Value<int> sortOrder,
       Value<double> volume,
       Value<double> best1rm,
@@ -3459,6 +3597,11 @@ class $$WorkoutExercisesTableFilterComposer
 
   ColumnFilters<int> get targetSets => $composableBuilder(
     column: $table.targetSets,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get volumeMultiplier => $composableBuilder(
+    column: $table.volumeMultiplier,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -3550,6 +3693,11 @@ class $$WorkoutExercisesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get volumeMultiplier => $composableBuilder(
+    column: $table.volumeMultiplier,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<int> get sortOrder => $composableBuilder(
     column: $table.sortOrder,
     builder: (column) => ColumnOrderings(column),
@@ -3606,6 +3754,11 @@ class $$WorkoutExercisesTableAnnotationComposer
 
   GeneratedColumn<int> get targetSets => $composableBuilder(
     column: $table.targetSets,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get volumeMultiplier => $composableBuilder(
+    column: $table.volumeMultiplier,
     builder: (column) => column,
   );
 
@@ -3701,6 +3854,7 @@ class $$WorkoutExercisesTableTableManager
                 Value<String> workoutId = const Value.absent(),
                 Value<String> name = const Value.absent(),
                 Value<int> targetSets = const Value.absent(),
+                Value<int> volumeMultiplier = const Value.absent(),
                 Value<int> sortOrder = const Value.absent(),
                 Value<double> volume = const Value.absent(),
                 Value<double> best1rm = const Value.absent(),
@@ -3710,6 +3864,7 @@ class $$WorkoutExercisesTableTableManager
                 workoutId: workoutId,
                 name: name,
                 targetSets: targetSets,
+                volumeMultiplier: volumeMultiplier,
                 sortOrder: sortOrder,
                 volume: volume,
                 best1rm: best1rm,
@@ -3721,6 +3876,7 @@ class $$WorkoutExercisesTableTableManager
                 required String workoutId,
                 required String name,
                 Value<int> targetSets = const Value.absent(),
+                Value<int> volumeMultiplier = const Value.absent(),
                 Value<int> sortOrder = const Value.absent(),
                 Value<double> volume = const Value.absent(),
                 Value<double> best1rm = const Value.absent(),
@@ -3730,6 +3886,7 @@ class $$WorkoutExercisesTableTableManager
                 workoutId: workoutId,
                 name: name,
                 targetSets: targetSets,
+                volumeMultiplier: volumeMultiplier,
                 sortOrder: sortOrder,
                 volume: volume,
                 best1rm: best1rm,

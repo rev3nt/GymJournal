@@ -19,22 +19,50 @@ enum SetType {
   }
 }
 
+/// In-session weight/reps draft for one exercise (survives switches + app pause).
+class ExerciseInputDraft {
+  const ExerciseInputDraft({required this.weight, required this.reps});
+
+  final double weight;
+  final int reps;
+
+  Map<String, dynamic> toJson() => {'weight': weight, 'reps': reps};
+
+  static ExerciseInputDraft? fromJson(Map<String, dynamic>? json) {
+    if (json == null) return null;
+    final w = (json['weight'] as num?)?.toDouble();
+    final r = json['reps'];
+    final reps = r is int ? r : (r is num ? r.toInt() : null);
+    if (w == null || reps == null) return null;
+    return ExerciseInputDraft(weight: w, reps: reps);
+  }
+}
+
 class TemplateExercise {
   const TemplateExercise({
     required this.id,
     required this.name,
     this.targetSets = 4,
+    this.volumeMultiplier = 1,
   });
 
   final String id;
   final String name;
   final int targetSets;
+  /// 1 = bilateral (default), 2 = one limb / side (×2 tonnage).
+  final int volumeMultiplier;
 
-  TemplateExercise copyWith({String? id, String? name, int? targetSets}) {
+  TemplateExercise copyWith({
+    String? id,
+    String? name,
+    int? targetSets,
+    int? volumeMultiplier,
+  }) {
     return TemplateExercise(
       id: id ?? this.id,
       name: name ?? this.name,
       targetSets: targetSets ?? this.targetSets,
+      volumeMultiplier: volumeMultiplier ?? this.volumeMultiplier,
     );
   }
 }
@@ -111,6 +139,7 @@ class WorkoutExercise {
     required this.id,
     required this.name,
     this.targetSets = 4,
+    this.volumeMultiplier = 1,
     this.sets = const [],
     this.volume = 0,
     this.best1rm = 0,
@@ -119,6 +148,7 @@ class WorkoutExercise {
   final String id;
   final String name;
   final int targetSets;
+  final int volumeMultiplier;
   final List<Approach> sets;
   final double volume;
   final double best1rm;
@@ -127,6 +157,7 @@ class WorkoutExercise {
     String? id,
     String? name,
     int? targetSets,
+    int? volumeMultiplier,
     List<Approach>? sets,
     double? volume,
     double? best1rm,
@@ -135,6 +166,7 @@ class WorkoutExercise {
       id: id ?? this.id,
       name: name ?? this.name,
       targetSets: targetSets ?? this.targetSets,
+      volumeMultiplier: volumeMultiplier ?? this.volumeMultiplier,
       sets: sets ?? this.sets,
       volume: volume ?? this.volume,
       best1rm: best1rm ?? this.best1rm,

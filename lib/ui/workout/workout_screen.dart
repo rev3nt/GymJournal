@@ -156,38 +156,104 @@ class _EmptyWorkoutView extends ConsumerWidget {
   }
 }
 
-class _PastWorkoutView extends ConsumerWidget {
+class _PastWorkoutView extends ConsumerStatefulWidget {
   const _PastWorkoutView({required this.past});
 
   final WorkoutSession past;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_PastWorkoutView> createState() => _PastWorkoutViewState();
+}
+
+class _PastWorkoutViewState extends ConsumerState<_PastWorkoutView> {
+  bool _editing = false;
+
+  WorkoutSession get past => widget.past;
+
+  @override
+  Widget build(BuildContext context) {
+    final ui = ref.watch(appControllerProvider);
+    final controller = ref.read(appControllerProvider.notifier);
     final fmt = DateFormat('d MMM, HH:mm', 'ru');
-    return ListView(
+    final ton = sessionTonnage(past);
+    final activeId = ui.activeExerciseId ?? past.exercises.firstOrNull?.id;
+
+    final list = ListView(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
       children: [
         Row(
           children: [
             Expanded(
               child: TextButton(
-                onPressed: () => ref.read(appControllerProvider.notifier).closePastWorkout(),
+                onPressed: controller.closePastWorkout,
                 style: TextButton.styleFrom(
                   alignment: Alignment.centerLeft,
                   foregroundColor: AppColors.fg,
-                  padding: EdgeInsets.zero,
+                  minimumSize: const Size(0, 48),
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
-                child: const Text('← К списку'),
+                child: const Text(
+                  '← К списку',
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+                ),
               ),
             ),
+            if (_editing)
+              OutlinedButton(
+                onPressed: () => setState(() => _editing = false),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.accent,
+                  backgroundColor: AppColors.accentSoft,
+                  side: const BorderSide(color: AppColors.border),
+                  minimumSize: const Size(0, 48),
+                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppColors.radius),
+                  ),
+                  textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                ),
+                child: const Text('Готово'),
+              )
+            else
+              IconButton(
+                tooltip: 'Изменить',
+                onPressed: () => setState(() => _editing = true),
+                iconSize: 28,
+                style: IconButton.styleFrom(
+                  minimumSize: const Size(48, 48),
+                  tapTargetSize: MaterialTapTargetSize.padded,
+                ),
+                icon: const Icon(Icons.edit_outlined, color: AppColors.muted),
+              ),
+            const SizedBox(width: 12),
             IconButton(
               tooltip: 'Удалить тренировку',
-              onPressed: () => _deletePast(context, ref),
+              onPressed: () => _deletePast(context),
+              iconSize: 28,
+              style: IconButton.styleFrom(
+                minimumSize: const Size(48, 48),
+                tapTargetSize: MaterialTapTargetSize.padded,
+              ),
               icon: const Icon(Icons.delete_outline, color: AppColors.danger),
             ),
           ],
         ),
-        PageTitle(past.name, fontSize: 24),
+        if (_editing)
+          GestureDetector(
+            onLongPress: () async {
+              final name = await _promptWorkoutName(
+                context,
+                initial: past.name,
+                title: 'Название тренировки',
+              );
+              if (name == null || name.trim().isEmpty) return;
+              await controller.renameWorkout(past, name);
+            },
+            child: PageTitle(past.name, fontSize: 24),
+          )
+        else
+          PageTitle(past.name, fontSize: 24),
         const SizedBox(height: 8),
         Align(
           alignment: Alignment.centerLeft,
@@ -204,24 +270,84 @@ class _PastWorkoutView extends ConsumerWidget {
           ),
         ),
         const SizedBox(height: 12),
-        _TonnageCard(tonnage: past.tonnage),
+        _TonnageCard(tonnage: ton),
         const SizedBox(height: 12),
-        ...past.exercises.asMap().entries.map((entry) {
-          final i = entry.key;
-          final ex = entry.value;
-          return _ExerciseCard(
-            exercise: ex.copyWith(id: 'past-${past.id}-$i'),
-            readonly: true,
-            pastSets: const [],
-            selected: true,
+        ...past.exercises.map((ex) {
+          if (!_editing) {
+            return _ExerciseCard(
+              exercise: ex,
+              readonly: true,
+              pastSets: const [],
+              selected: true,
+            );
+          }
+          return FutureBuilder<List<Approach>>(
+            future: ref.read(databaseProvider).lastPastSetsForExercise(ex.name),
+            builder: (context, snap) {
+              final selected = activeId == ex.id;
+              return _ExerciseCard(
+                exercise: ex,
+                readonly: false,
+                pastSets: snap.data ?? const [],
+                selected: selected,
+                onSelect: () async {
+                  final pastSets =
+                      await ref.read(databaseProvider).lastPastSetsForExercise(ex.name);
+                  controller.setActiveExercise(
+                    ex.id,
+                    applyPrefill: true,
+                    past: pastSets,
+                    currentSetsLen: ex.sets.length,
+                  );
+                },
+                onToggleMultiplier: () async {
+                  final next = ex.volumeMultiplier == 2 ? 1 : 2;
+                  await controller.setExerciseVolumeMultiplier(past, ex.id, next);
+                },
+                onRename: () async {
+                  final name = await _promptWorkoutName(
+                    context,
+                    initial: ex.name,
+                    title: 'Переименовать',
+                  );
+                  if (name == null || name.trim().isEmpty) return;
+                  await controller.renameExercise(past, ex.id, name);
+                },
+                onEditSet: (set) async {
+                  final updated = await showEditApproachSheet(context, approach: set);
+                  if (updated == null) return;
+                  if (updated.legs.isEmpty) {
+                    await controller.deleteSet(past, ex.id, set.id);
+                    if (context.mounted) showAppToast(context, 'Подход удалён');
+                    return;
+                  }
+                  await controller.updateApproach(past, ex.id, updated);
+                },
+                onDeleteSet: (setId) async {
+                  await controller.deleteSet(past, ex.id, setId);
+                  if (context.mounted) showAppToast(context, 'Подход удалён');
+                },
+              );
+            },
           );
         }),
+        if (_editing) ...[
+          const SizedBox(height: 8),
+          SecondaryButton(
+            label: 'Добавить упражнение',
+            onPressed: () async {
+              final name = await _promptWorkoutName(context);
+              if (name == null || name.trim().isEmpty) return;
+              await controller.addExercise(past, name);
+            },
+          ),
+        ],
         const SizedBox(height: 20),
         SizedBox(
           width: double.infinity,
           height: 48,
           child: OutlinedButton(
-            onPressed: () => _deletePast(context, ref),
+            onPressed: () => _deletePast(context),
             style: OutlinedButton.styleFrom(
               foregroundColor: AppColors.danger,
               side: const BorderSide(color: AppColors.danger),
@@ -234,9 +360,18 @@ class _PastWorkoutView extends ConsumerWidget {
         ),
       ],
     );
+
+    if (!_editing) return list;
+
+    return Column(
+      children: [
+        Expanded(child: list),
+        _InputPanel(session: past),
+      ],
+    );
   }
 
-  Future<void> _deletePast(BuildContext context, WidgetRef ref) async {
+  Future<void> _deletePast(BuildContext context) async {
     final ok = await confirmDialog(
       context,
       title: 'Удалить тренировку?',
@@ -297,7 +432,11 @@ class _ActiveWorkoutView extends ConsumerWidget {
                         await controller.setExerciseVolumeMultiplier(session, ex.id, next);
                       },
                       onRename: () async {
-                        final name = await _promptName(context, initial: ex.name, title: 'Переименовать');
+                        final name = await _promptWorkoutName(
+                          context,
+                          initial: ex.name,
+                          title: 'Переименовать',
+                        );
                         if (name == null || name.trim().isEmpty) return;
                         await controller.renameExercise(session, ex.id, name);
                       },
@@ -323,7 +462,7 @@ class _ActiveWorkoutView extends ConsumerWidget {
               SecondaryButton(
                 label: 'Добавить упражнение',
                 onPressed: () async {
-                  final name = await _promptName(context);
+                  final name = await _promptWorkoutName(context);
                   if (name == null || name.trim().isEmpty) return;
                   await controller.addExercise(session, name);
                 },
@@ -376,31 +515,32 @@ class _ActiveWorkoutView extends ConsumerWidget {
     );
   }
 
-  Future<String?> _promptName(
-    BuildContext context, {
-    String? initial,
-    String title = 'Название упражнения',
-  }) async {
-    final ctrl = TextEditingController(text: initial ?? '');
-    return showDialog<String>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(title),
-        content: TextField(
-          controller: ctrl,
-          autofocus: true,
-          decoration: const InputDecoration(hintText: 'Например, Жим лёжа'),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Отмена')),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, ctrl.text),
-            child: const Text('Готово'),
-          ),
-        ],
+}
+
+Future<String?> _promptWorkoutName(
+  BuildContext context, {
+  String? initial,
+  String title = 'Название упражнения',
+}) async {
+  final ctrl = TextEditingController(text: initial ?? '');
+  return showDialog<String>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: Text(title),
+      content: TextField(
+        controller: ctrl,
+        autofocus: true,
+        decoration: const InputDecoration(hintText: 'Например, Жим лёжа'),
       ),
-    );
-  }
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Отмена')),
+        TextButton(
+          onPressed: () => Navigator.pop(ctx, ctrl.text),
+          child: const Text('Готово'),
+        ),
+      ],
+    ),
+  );
 }
 
 class _TonnageCard extends StatelessWidget {

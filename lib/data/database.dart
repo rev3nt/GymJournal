@@ -421,6 +421,25 @@ class AppDatabase extends _$AppDatabase {
     });
   }
 
+  /// Persists a finished session without clearing [WorkoutSession.finishedAt].
+  Future<void> saveFinishedSession(WorkoutSession session) async {
+    final finishedAt = session.finishedAt;
+    if (finishedAt == null) {
+      throw ArgumentError('saveFinishedSession requires finishedAt');
+    }
+    final exercises = session.exercises.map(withAggregates).toList();
+    final ton = sessionTonnage(session.copyWith(exercises: exercises));
+    final next = session.copyWith(
+      finishedAt: finishedAt,
+      tonnage: ton,
+      exercises: exercises,
+    );
+    await transaction(() async {
+      await (delete(workouts)..where((t) => t.id.equals(session.id))).go();
+      await _insertWorkoutTree(next);
+    });
+  }
+
   Future<void> finishWorkout(WorkoutSession session) async {
     final finished = DateTime.now();
     final exercises = session.exercises.map(withAggregates).toList();

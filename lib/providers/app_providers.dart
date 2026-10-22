@@ -272,6 +272,14 @@ class AppController extends Notifier<UiSession> {
     _applyPastPrefill(past, currentSetsLen: 0);
   }
 
+  Future<void> _persistSession(WorkoutSession session) async {
+    if (session.isFinished) {
+      await _db.saveFinishedSession(session);
+    } else {
+      await _db.saveActiveSession(session);
+    }
+  }
+
   Future<void> logSet(WorkoutSession active) async {
     if (state.weight < 0 || state.reps <= 0) {
       throw ArgumentError('invalid_inputs');
@@ -309,7 +317,7 @@ class AppController extends Notifier<UiSession> {
       exercises: exercises,
       tonnage: sessionTonnage(active.copyWith(exercises: exercises)),
     );
-    await _db.saveActiveSession(next);
+    await _persistSession(next);
 
     final drafts = _draftsWithCurrent(exId);
     final restoreReps = type != SetType.normal ? (state.savedReps ?? 8) : state.reps;
@@ -344,7 +352,7 @@ class AppController extends Notifier<UiSession> {
       exercises: exercises,
       tonnage: sessionTonnage(active.copyWith(exercises: exercises)),
     );
-    await _db.saveActiveSession(next);
+    await _persistSession(next);
   }
 
   Future<void> updateApproach(
@@ -367,7 +375,7 @@ class AppController extends Notifier<UiSession> {
       exercises: exercises,
       tonnage: sessionTonnage(active.copyWith(exercises: exercises)),
     );
-    await _db.saveActiveSession(next);
+    await _persistSession(next);
   }
 
   Future<void> renameExercise(
@@ -381,7 +389,13 @@ class AppController extends Notifier<UiSession> {
     if (exIndex < 0) return;
     final exercises = [...active.exercises];
     exercises[exIndex] = exercises[exIndex].copyWith(name: trimmed);
-    await _db.saveActiveSession(active.copyWith(exercises: exercises));
+    await _persistSession(active.copyWith(exercises: exercises));
+  }
+
+  Future<void> renameWorkout(WorkoutSession session, String name) async {
+    final trimmed = name.trim();
+    if (trimmed.isEmpty) return;
+    await _persistSession(session.copyWith(name: trimmed));
   }
 
   Future<void> setExerciseVolumeMultiplier(
@@ -401,7 +415,7 @@ class AppController extends Notifier<UiSession> {
       exercises: exercises,
       tonnage: sessionTonnage(active.copyWith(exercises: exercises)),
     );
-    await _db.saveActiveSession(next);
+    await _persistSession(next);
   }
 
   Future<void> addExercise(WorkoutSession active, String name) async {
@@ -411,7 +425,7 @@ class AppController extends Notifier<UiSession> {
       targetSets: 4,
     );
     final next = active.copyWith(exercises: [...active.exercises, ex]);
-    await _db.saveActiveSession(next);
+    await _persistSession(next);
     setActiveExercise(ex.id, applyPrefill: false);
   }
 
@@ -507,16 +521,31 @@ class AppController extends Notifier<UiSession> {
     state = UiSession(tabIndex: state.tabIndex);
   }
 
-  void openPastWorkout(String id) {
+  Future<void> openPastWorkout(String id) async {
+    final session = await _db.loadWorkoutTree(id);
+    final firstEx = session?.exercises.firstOrNull;
     state = state.copyWith(
       viewingPastId: id,
       tabIndex: 1,
-      clearActiveExercise: true,
+      activeExerciseId: firstEx?.id,
+      pendingLegType: SetType.normal,
+      clearSavedReps: true,
+      clearExerciseDrafts: true,
     );
+    if (firstEx != null) {
+      final past = await _db.lastPastSetsForExercise(firstEx.name);
+      _applyPastPrefill(past, currentSetsLen: firstEx.sets.length);
+    }
   }
 
   void closePastWorkout() {
-    state = state.copyWith(clearViewingPast: true);
+    state = state.copyWith(
+      clearViewingPast: true,
+      clearActiveExercise: true,
+      clearExerciseDrafts: true,
+      pendingLegType: SetType.normal,
+      clearSavedReps: true,
+    );
   }
 
   Future<void> deleteWorkout(String id) async {

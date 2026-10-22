@@ -11,11 +11,11 @@
   <meta property="og:description" content="Шаблоны, дроп/мио/читинг, тоннаж и 1ПМ, JSON-бэкап. Данные на телефоне. Скачать APK.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://rev3nt.github.io/GymJournal/">
-  <meta property="og:image" content="https://rev3nt.github.io/GymJournal/assets/screenshot-hero.png">
-  <link rel="icon" href="assets/app_icon.png" type="image/png">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&family=Unbounded:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <meta property="og:image" content="https://rev3nt.github.io/GymJournal/assets/screenshot-hero.webp">
+  <link rel="icon" href="assets/app_icon.webp" type="image/webp">
+  <link rel="preload" href="fonts/onest-cyrillic.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="fonts/unbounded-cyrillic.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="assets/screenshot-hero.webp" as="image" fetchpriority="high">
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
@@ -23,7 +23,7 @@
   <header class="site-header">
     <div class="wrap header-inner">
       <a class="logo" href="index.html">
-        <img src="assets/app_icon.png" width="36" height="36" alt="">
+        <img src="assets/app_icon.webp" width="36" height="36" alt="">
         Lift Log
       </a>
       <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">Меню</button>
@@ -54,7 +54,7 @@
         <div class="hero-visual">
           <img
             class="hero-shot"
-            src="assets/screenshot-hero.png"
+            src="assets/screenshot-hero.webp"
             width="426"
             height="880"
             alt="Скриншот Lift Log: активная тренировка — жим лёжа, вес, повторы и типы подходов"
@@ -73,15 +73,15 @@
         </div>
         <div class="shot-row reveal">
           <figure class="shot-card">
-            <img src="assets/screenshot-templates.png" width="426" height="880" alt="Экран шаблонов Lift Log" loading="lazy">
+            <img src="assets/screenshot-templates.webp" width="426" height="880" alt="Экран шаблонов Lift Log" loading="lazy">
             <figcaption>Шаблоны</figcaption>
           </figure>
           <figure class="shot-card shot-card--offset">
-            <img src="assets/screenshot-hero.png" width="426" height="880" alt="Экран тренировки Lift Log" loading="lazy">
+            <img src="assets/screenshot-hero.webp" width="426" height="880" alt="Экран тренировки Lift Log" loading="lazy">
             <figcaption>Тренировка</figcaption>
           </figure>
           <figure class="shot-card">
-            <img src="assets/screenshot-stats.png" width="426" height="880" alt="Экран статистики Lift Log" loading="lazy">
+            <img src="assets/screenshot-stats.webp" width="426" height="880" alt="Экран статистики Lift Log" loading="lazy">
             <figcaption>Статистика</figcaption>
           </figure>
         </div>
@@ -179,6 +179,6 @@
       <span>Сайт для GitHub Pages</span>
     </div>
   </footer>
-  <script src="js/main.js"></script>
+  <script src="js/main.js" defer></script>
 </body>
 </html>

@@ -1,4 +1,10 @@
 User-agent: *
 Allow: /
+Disallow: /yandex_*.html
 
-Sitemap: https://rev3nt.github.io/GymJournal/sitemap.xml
+User-agent: Yandex
+Allow: /
+Disallow: /yandex_*.html
+Clean-param: utm_source&utm_medium&utm_campaign&utm_content&utm_term
+
+Sitemap: https://gymjournal.mikhail-flain-2005.workers.dev/sitemap.xml

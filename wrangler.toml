@@ -1,0 +1,7 @@
+name = "gymjournal"
+compatibility_date = "2026-11-27"
+
+[assets]
+directory = "./docs"
+html_handling = "none"
+not_found_handling = "404-page"
